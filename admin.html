@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#12362c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='24' fill='%2312362c'/%3E%3Cpath d='M50 18c2 22 12 32 34 34-22 2-32 12-34 34-2-22-12-32-34-34 22-2 32-12 34-34Z' fill='%23e4b660'/%3E%3C/svg%3E">
+  <meta name="description" content="لوحة تحكم مُنطلق (Prompt) — إدارة المكتبة العربية للمُنطلقات الذكية والاقتراحات والنسخ الاحتياطي.">
+  <title>لوحة التحكم — مُنطلق (Prompt)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#172720',
+            paper: '#f7f2e9',
+            brand: { DEFAULT: '#0f6b53', dark: '#0a4e3c', soft: '#e2f0ea' },
+            coral: '#e9764c',
+            gold: '#e4b660'
+          },
+          fontFamily: {
+            sans: ['Tajawal', 'system-ui', 'sans-serif'],
+            display: ['Tajawal', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --paper: #f4efe5;
+      --card: #fffdf8;
+      --ink: #172720;
+      --ink-soft: #4b5d55;
+      --ink-faint: #7d8a84;
+      --brand: #0f6b53;
+      --brand-dark: #0a4e3c;
+      --brand-soft: #e2f0ea;
+      --coral: #e9764c;
+      --coral-soft: #fbe9e1;
+      --gold: #e4b660;
+      --line: #e5ddd0;
+      --line-strong: #d5cab9;
+      --sidebar: #12362c;
+      --sidebar-soft: #1a4739;
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.7;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 50% 40% at 90% 0%, rgba(15, 107, 83, .06), transparent 60%),
+        radial-gradient(ellipse 40% 35% at 20% 100%, rgba(233, 118, 76, .05), transparent 65%);
+    }
+    ::selection { background: var(--brand); color: #fff; }
+    button, input, select, textarea { font-family: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+    svg { display: block; }
+    h1, h2, h3, h4, p { margin: 0; }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      color: #12362c;
+      background:
+        radial-gradient(circle at 25% 20%, #fff, transparent 45%),
+        linear-gradient(145deg, #f2e5c8, #e4b660);
+      box-shadow: 0 12px 25px -14px rgba(228, 182, 96, .7);
+    }
+    .brand-prompt {
+      font-size: 9.5px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: .02em;
+      color: var(--gold);
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    .admin-sidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 268px;
+      z-index: 60;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 85% 4%, rgba(228, 182, 96, .11), transparent 30%),
+        radial-gradient(circle at 10% 90%, rgba(233, 118, 76, .09), transparent 35%),
+        var(--sidebar);
+      color: #e7f0ec;
+      border-left: 1px solid rgba(255,255,255,.07);
+      transition: transform .3s ease;
+    }
+    .sidebar-brand { padding: 22px 20px 15px; }
+    .sidebar-scroll { overflow-y: auto; padding: 0 14px 14px; flex: 1; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.15) transparent; }
+    .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.14); border-radius: 5px; }
+    .sidebar-section-label {
+      padding: 16px 11px 7px;
+      color: rgba(231, 240, 236, .4);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+    .panel-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 11px;
+      border: 0;
+      border-radius: 11px;
+      background: transparent;
+      color: rgba(231, 240, 236, .66);
+      font-size: 12.5px;
+      font-weight: 500;
+      text-align: right;
+      transition: all .2s ease;
+      margin-bottom: 3px;
+    }
+    .panel-btn:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .panel-btn.is-active {
+      color: var(--sidebar);
+      background: #f7f2e9;
+      box-shadow: 0 10px 22px -15px rgba(0,0,0,.5);
+      font-weight: 700;
+    }
+    .panel-btn svg { flex: 0 0 auto; opacity: .9; }
+    .panel-btn .nav-badge {
+      margin-inline-start: auto;
+      background: var(--coral);
+      color: #fff;
+      min-width: 19px;
+      height: 19px;
+      padding: 0 5px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    .panel-btn.is-active .nav-badge { background: var(--coral); color: #fff; }
+    .panel-btn .nav-count {
+      margin-inline-start: auto;
+      min-width: 19px;
+      height: 19px;
+      padding: 0 5px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      font-size: 9px;
+      font-weight: 700;
+      background: rgba(255,255,255,.09);
+      color: rgba(255,255,255,.65);
+    }
+    .panel-btn.is-active .nav-count { background: rgba(15,107,83,.1); color: var(--brand); }
+    .sidebar-note {
+      margin: 10px 8px 0;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.055);
+      border: 1px solid rgba(255,255,255,.07);
+    }
+    .sidebar-user {
+      margin: 10px 8px 0;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      background: rgba(228,182,96,.17);
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 900;
+      border: 1px solid rgba(228,182,96,.2);
+    }
+
+    .admin-main { margin-right: 268px; min-height: 100vh; }
+    .admin-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 28px;
+      background: rgba(244, 239, 229, .86);
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(213, 202, 185, .55);
+    }
+    .breadcrumb { font-size: 11px; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }
+    .breadcrumb strong { color: var(--ink); font-weight: 700; }
+    .top-search {
+      margin-inline-start: auto;
+      position: relative;
+      width: min(280px, 28vw);
+    }
+    .top-search svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
+    .top-search input {
+      width: 100%;
+      height: 37px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255,253,248,.7);
+      padding: 0 37px 0 11px;
+      font-size: 11.5px;
+      color: var(--ink);
+      transition: all .2s;
+    }
+    .top-search input:focus { outline: none; border-color: var(--brand); background: #fffdf8; box-shadow: 0 0 0 3px rgba(15,107,83,.08); }
+    .save-state { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--ink-faint); white-space: nowrap; }
+    .save-state .dot { width: 6px; height: 6px; border-radius: 50%; background: #3eb18a; box-shadow: 0 0 0 4px rgba(62,177,138,.12); }
+    .avatar-top { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--sidebar); color: #f7f2e9; font-weight: 800; font-size: 13px; }
+
+    .admin-content { max-width: 1460px; margin: 0 auto; padding: 28px 28px 34px; }
+    .page-title { font-size: clamp(1.6rem, 2.7vw, 2.15rem); font-weight: 900; line-height: 1.3; }
+    .page-sub { font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 0;
+      border-radius: 11px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      transition: all .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--brand); color: #fff; box-shadow: 0 12px 24px -15px rgba(15,107,83,.7); }
+    .btn-primary:hover { background: var(--brand-dark); }
+    .btn-secondary { background: #fffdf8; color: var(--ink-soft); border: 1px solid var(--line); }
+    .btn-secondary:hover { background: #fff; border-color: var(--line-strong); color: var(--ink); }
+    .btn-ghost { background: transparent; color: var(--ink-soft); }
+    .btn-ghost:hover { background: rgba(23,39,32,.05); color: var(--ink); }
+    .btn-danger { background: #fff1eb; color: #b64f2b; border: 1px solid #f5d8cc; }
+    .btn-danger:hover { background: #fde5db; }
+    .icon-btn {
+      width: 37px;
+      height: 37px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--ink-soft);
+      transition: all .2s;
+    }
+    .icon-btn:hover { color: var(--ink); border-color: var(--line-strong); }
+    .icon-btn.danger:hover { color: #c45530; background: #fff3ee; border-color: #f1d1c4; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(233,118,76,.4);
+      outline-offset: 2px;
+    }
+
+    .admin-card {
+      background: rgba(255,253,248,.9);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+    }
+    .stat-card {
+      position: relative;
+      overflow: hidden;
+      padding: 17px;
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 18px 35px -28px rgba(23,39,32,.5); }
+    .stat-icon {
+      width: 37px;
+      height: 37px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      margin-bottom: 13px;
+    }
+    .stat-label { font-size: 10px; color: var(--ink-faint); font-weight: 500; }
+    .stat-value { font-size: 26px; font-weight: 900; line-height: 1.2; margin-top: 2px; }
+    .stat-meta { font-size: 9px; font-weight: 500; color: var(--ink-faint); display: flex; align-items: center; gap: 4px; margin-top: 5px; }
+    .stat-meta.positive { color: #2a8667; }
+
+    .panel-view { animation: panelIn .32s ease-out; }
+    @keyframes panelIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+    .section-title { font-size: 14px; font-weight: 800; }
+    .section-note { font-size: 10px; color: var(--ink-faint); margin-top: 2px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      text-align: right;
+      font-size: 9px;
+      color: var(--ink-faint);
+      font-weight: 700;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+      background: rgba(247,242,233,.55);
+    }
+    td { padding: 12px; border-bottom: 1px solid #f0e9dd; font-size: 11px; color: var(--ink-soft); vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: rgba(247,242,233,.55); }
+    .table-title { font-size: 11.5px; font-weight: 700; color: var(--ink); line-height: 1.5; }
+    .table-sub { font-size: 9.5px; color: var(--ink-faint); margin-top: 1px; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cat-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      border-radius: 7px;
+      padding: 4px 7px;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--cat-color, var(--brand));
+      background: var(--cat-tint, var(--brand-soft));
+      white-space: nowrap;
+    }
+    .difficulty-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 6px;
+      padding: 3px 7px;
+      font-size: 9px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .difficulty-سهل { background: #e9f6ee; color: #287a55; }
+    .difficulty-متوسط { background: #fbf2dc; color: #91651d; }
+    .difficulty-متقدم { background: #fbe9e2; color: #b15332; }
+    .action-group { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+    .mini-action {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink-faint);
+      transition: all .18s;
+    }
+    .mini-action:hover { background: var(--brand-soft); color: var(--brand); }
+    .mini-action.danger:hover { background: #fff0e9; color: #c25530; }
+
+    .field-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-soft);
+      margin-bottom: 5px;
+    }
+    .field-label .req { color: var(--coral); }
+    .input-control, .select-control {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 0 11px;
+      font-size: 12px;
+      transition: all .2s;
+    }
+    .select-control { appearance: none; -webkit-appearance: none; padding-left: 32px; }
+    .input-control:focus, .select-control:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(15,107,83,.08);
+    }
+    .select-wrap { position: relative; }
+    .select-wrap > svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--ink-faint); }
+    .textarea-control {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 9px 11px;
+      font-size: 12px;
+      line-height: 1.8;
+      resize: vertical;
+      min-height: 86px;
+      unicode-bidi: plaintext;
+      text-align: start;
+      transition: all .2s;
+    }
+    .textarea-control:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(15,107,83,.08); }
+    .textarea-control::placeholder, .input-control::placeholder { color: #9ca69f; }
+    .dir-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      direction: ltr;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      border-radius: 5px;
+      padding: 1px 6px;
+      border: 1px solid rgba(15,107,83,.16);
+      background: var(--brand-soft);
+      color: var(--brand-dark);
+      transition: all .2s;
+    }
+    .dir-badge[data-state="ltr"] { color: #9a4b2d; background: #fcece4; border-color: rgba(233,118,76,.2); }
+    .prompt-content {
+      unicode-bidi: plaintext;
+      text-align: start;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .cat-dist-row { display: flex; align-items: center; gap: 9px; padding: 7px 0; }
+    .cat-dist-icon { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; flex: 0 0 26px; }
+    .cat-dist-bar { flex: 1; height: 5px; background: #f0e9dd; border-radius: 5px; overflow: hidden; }
+    .cat-dist-fill { height: 100%; border-radius: 5px; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+    .top-prompt-row { display: flex; align-items: center; gap: 9px; padding: 8px 0; border-bottom: 1px solid #f2ece1; }
+    .top-prompt-row:last-child { border-bottom: 0; }
+
+    .suggestion-card {
+      background: #fffdf8;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .suggestion-card:hover { border-color: var(--line-strong); box-shadow: 0 16px 34px -30px rgba(23,39,32,.45); }
+    .suggestion-quote {
+      border-radius: 10px;
+      border: 1px solid #e9e2d5;
+      background: #f7f4ec;
+      padding: 10px 11px;
+      font-size: 10.5px;
+      line-height: 1.8;
+      color: var(--ink-soft);
+    }
+
+    .empty-state {
+      display: none;
+      text-align: center;
+      padding: 48px 22px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 18px;
+      background: rgba(255,253,248,.55);
+    }
+    .empty-state.is-visible { display: block; }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      text-align: right;
+      transition: all .2s;
+    }
+    .quick-action:hover { border-color: var(--brand); background: var(--brand-soft); }
+    .quick-action-icon { width: 31px; height: 31px; display: grid; place-items: center; border-radius: 8px; background: var(--brand-soft); color: var(--brand); flex: 0 0 31px; }
+
+    .admin-footer { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 9.5px; color: var(--ink-faint); flex-wrap: wrap; }
+
+    dialog {
+      width: min(940px, calc(100vw - 22px));
+      max-height: min(94vh, 940px);
+      padding: 0;
+      border: 0;
+      border-radius: 22px;
+      background: var(--card);
+      color: var(--ink);
+      overflow: hidden;
+      box-shadow: 0 40px 100px -30px rgba(0,0,0,.55);
+    }
+    dialog::backdrop { background: rgba(6,22,17,.68); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+    dialog[open] { animation: dialogIn .24s ease-out; }
+    @keyframes dialogIn { from { opacity: 0; transform: translateY(12px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .dialog-shell { display: flex; flex-direction: column; max-height: min(94vh, 940px); }
+    .dialog-body { overflow-y: auto; padding: 20px; overscroll-behavior: contain; }
+    .dialog-body::-webkit-scrollbar { width: 8px; }
+    .dialog-body::-webkit-scrollbar-thumb { background: #d8cfbf; border-radius: 8px; }
+    .dialog-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 13px 20px; border-top: 1px solid var(--line); background: #fffdf8; }
+
+    .confirm-dialog { width: min(430px, calc(100vw - 24px)); }
+    .confirm-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; margin-bottom: 13px; }
+
+    .toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+    .toast {
+      min-width: 230px;
+      max-width: 340px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      background: var(--sidebar);
+      color: #fffdf8;
+      box-shadow: 0 20px 44px -20px rgba(0,0,0,.55);
+      font-size: 11.5px;
+      font-weight: 500;
+      animation: toastIn .3s cubic-bezier(.2,.8,.2,1);
+    }
+    .toast.is-out { animation: toastOut .25s forwards; }
+    .toast-icon { width: 23px; height: 23px; flex: 0 0 23px; display: grid; place-items: center; border-radius: 7px; background: rgba(255,255,255,.12); color: #a8e6cf; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateY(8px) scale(.97); } }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: rgba(6,22,17,.45);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      transition: opacity .25s;
+    }
+
+    .storage-meter { height: 6px; border-radius: 6px; background: #eee7db; overflow: hidden; }
+    .storage-meter > span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--brand), #3eb18a); }
+
+    /* Admin authentication */
+    body.auth-locked { overflow: hidden; }
+    body.auth-locked > .admin-sidebar,
+    body.auth-locked > .admin-main,
+    body.auth-locked > #promptEditorDialog,
+    body.auth-locked > #confirmDialog { display: none !important; }
+
+    .admin-auth {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow-y: auto;
+      color: #e7f0ec;
+      background:
+        radial-gradient(circle at 84% 12%, rgba(228, 182, 96, .18), transparent 34%),
+        radial-gradient(circle at 12% 88%, rgba(233, 118, 76, .12), transparent 36%),
+        linear-gradient(145deg, #0b2a22 0%, #12362c 52%, #0a241d 100%);
+    }
+    .admin-auth[hidden] { display: none !important; }
+    .admin-auth::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .4;
+      background-image: radial-gradient(rgba(255,255,255,.14) .7px, transparent .7px);
+      background-size: 23px 23px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,.7), transparent 75%);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.7), transparent 75%);
+    }
+    .admin-auth::after {
+      content: "";
+      position: absolute;
+      width: 460px;
+      height: 460px;
+      border-radius: 50%;
+      border: 1px solid rgba(228,182,96,.14);
+      box-shadow: 0 0 0 70px rgba(228,182,96,.035), 0 0 0 140px rgba(228,182,96,.02);
+      pointer-events: none;
+    }
+    .auth-shell { position: relative; z-index: 1; width: min(430px, 100%); }
+    .auth-card {
+      width: 100%;
+      padding: 30px;
+      border-radius: 24px;
+      background: #fffdf8;
+      color: var(--ink);
+      border: 1px solid rgba(255,255,255,.45);
+      box-shadow: 0 40px 90px -40px rgba(0,0,0,.75);
+      animation: auth-card-in .4s ease both;
+    }
+    @keyframes auth-card-in {
+      from { opacity: 0; transform: translateY(12px) scale(.985); }
+      to { opacity: 1; transform: none; }
+    }
+    .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+    .auth-brand-copy { display: grid; gap: 2px; }
+    .auth-brand-name { font-size: 17px; font-weight: 900; line-height: 1.3; }
+    .auth-brand-sub { font-size: 9px; color: var(--ink-faint); font-weight: 700; }
+    .auth-lock-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      color: var(--brand);
+      background: var(--brand-soft);
+      border: 1px solid #cfe7dc;
+      margin-bottom: 15px;
+    }
+    .auth-title { font-size: 23px; font-weight: 900; line-height: 1.35; }
+    .auth-sub { font-size: 11px; line-height: 1.9; color: var(--ink-soft); margin-top: 7px; }
+    .auth-form { margin-top: 22px; }
+    .auth-field-label { display: block; font-size: 10.5px; font-weight: 700; margin-bottom: 7px; }
+    .auth-password-wrap { position: relative; }
+    .auth-password-wrap input {
+      width: 100%;
+      height: 49px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: var(--ink);
+      padding: 0 14px 0 48px;
+      font-size: 15px;
+      letter-spacing: .1em;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .auth-password-wrap input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(15,107,83,.09);
+    }
+    .auth-password-wrap input::placeholder { font-size: 11px; letter-spacing: 0; color: var(--ink-faint); }
+    .auth-toggle {
+      position: absolute;
+      left: 7px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--ink-faint);
+    }
+    .auth-toggle:hover { color: var(--ink); background: #f3eee5; }
+    .auth-error {
+      margin-top: 10px;
+      padding: 9px 11px;
+      border-radius: 9px;
+      border: 1px solid #f2d3c7;
+      background: #fff2ec;
+      color: #a94a28;
+      font-size: 10.5px;
+      font-weight: 700;
+      line-height: 1.7;
+    }
+    .auth-submit { width: 100%; height: 46px; margin-top: 14px; font-size: 12.5px; }
+    .auth-submit[disabled] { opacity: .68; cursor: wait; transform: none; }
+    .auth-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      font-size: 9.5px;
+      color: var(--ink-faint);
+    }
+    .auth-foot a { font-weight: 700; color: var(--brand); }
+    .auth-foot a:hover { color: var(--brand-dark); }
+    .auth-privacy { display: inline-flex; align-items: center; gap: 5px; }
+    .auth-privacy::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3eb18a; box-shadow: 0 0 0 3px rgba(62,177,138,.12); }
+    .auth-copyright { margin-top: 15px; text-align: center; font-size: 8.5px; color: rgba(231,240,236,.48); }
+    .password-status {
+      margin-top: 12px;
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.8;
+    }
+    .password-status.is-error { border: 1px solid #f2d3c7; background: #fff2ec; color: #a94a28; }
+    .password-status.is-success { border: 1px solid #cfe7dc; background: #eef8f3; color: #1d6d54; }
+    .default-password-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border: 1px solid #f0dfb7;
+      border-radius: 8px;
+      background: #fdf7e8;
+      color: #8b631c;
+      font-size: 9.5px;
+      font-weight: 600;
+    }
+    .default-password-hint[hidden] { display: none; }
+
+    @media (max-width: 480px) {
+      .admin-auth { padding: 14px; }
+      .auth-card { padding: 23px 20px; border-radius: 20px; }
+      .auth-title { font-size: 20px; }
+    }
+
+    @media (max-width: 1023px) {
+      .admin-sidebar { transform: translateX(100%); box-shadow: -30px 0 60px -30px rgba(0,0,0,.4); }
+      .admin-sidebar.is-open { transform: translateX(0); }
+      .admin-main { margin-right: 0; }
+      .sidebar-overlay.is-open { display: block; opacity: 1; }
+      .top-search { width: min(250px, 32vw); }
+    }
+    @media (max-width: 780px) {
+      .admin-topbar { padding: 0 14px; height: 62px; gap: 8px; }
+      .top-search { display: none; }
+      .breadcrumb { display: none; }
+      .save-state { font-size: 8.5px; }
+      .admin-content { padding: 20px 14px 28px; }
+      .dialog-body { padding: 15px; }
+      .dialog-foot { padding: 12px 15px; }
+      .toast-container { left: 10px; right: 10px; bottom: 12px; }
+      .toast { width: 100%; max-width: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    }
+  </style>
+</head>
+
+<body data-page="admin" class="auth-locked">
+  <!-- ===================== Admin Authentication ===================== -->
+  <div class="admin-auth" id="adminAuthGate" role="dialog" aria-modal="true" aria-labelledby="authTitle" aria-describedby="authSubtitle">
+    <div class="auth-shell">
+      <section class="auth-card">
+        <div class="auth-brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2.8c.55 5.2 2.9 7.6 8.1 8.2-5.2.6-7.55 3-8.1 8.2-.55-5.2-2.9-7.6-8.1-8.2 5.2-.6 7.55-3 8.1-8.2Z" fill="currentColor"/><circle cx="19.2" cy="4.9" r="1.5" fill="#fffdf8"/></svg>
+          </span>
+          <span class="auth-brand-copy">
+            <span class="auth-brand-name">مُنطلق (Prompt)</span>
+            <span class="auth-brand-sub">المكتبة العربية للمُنطلقات الذكية</span>
+          </span>
+        </div>
+
+        <span class="auth-lock-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+        </span>
+
+        <h1 class="auth-title" id="authTitle">دخول لوحة التحكم</h1>
+        <p class="auth-sub" id="authSubtitle">هذه المساحة مخصصة لمدير الموقع. أدخل كلمة المرور للمتابعة إلى إدارة المكتبة والاقتراحات.</p>
+
+        <form class="auth-form" id="adminLoginForm" novalidate>
+          <label class="auth-field-label" for="adminLoginPassword">كلمة المرور</label>
+          <div class="auth-password-wrap">
+            <input id="adminLoginPassword" name="password" type="password" autocomplete="current-password" spellcheck="false" placeholder="أدخل كلمة مرور المدير" aria-describedby="adminLoginError" required>
+            <button class="auth-toggle" id="adminLoginToggle" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">
+              <svg data-eye="show" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg data-eye="hide" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden><path d="m3 3 18 18"/><path d="M10.6 6.2A10.8 10.8 0 0 1 12 6c6.5 0 10 6 10 6a17 17 0 0 1-2.4 3.1M6.2 6.3C3.5 8.1 2 12 2 12s3.5 6 10 6c1.3 0 2.5-.2 3.5-.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+            </button>
+          </div>
+          <p class="auth-error" id="adminLoginError" role="alert" aria-live="polite" hidden></p>
+          <button class="btn btn-primary auth-submit" type="submit" id="adminLoginSubmit">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></svg>
+            دخول آمن إلى لوحة التحكم
+          </button>
+        </form>
+
+        <div class="auth-foot">
+          <span class="auth-privacy">حماية محلية</span>
+          <a href="index.html">العودة إلى الموقع ←</a>
+        </div>
+      </section>
+      <p class="auth-copyright">© <span id="authYear">2026</span> مُنطلق (Prompt) — لوحة التحكم</p>
+    </div>
+  </div>
+
+  <!-- ===================== Sidebar ===================== -->
+  <aside class="admin-sidebar" id="adminSidebar" aria-label="التنقل في لوحة التحكم">
+    <div class="sidebar-brand">
+      <a href="index.html" class="flex items-center gap-2.5" aria-label="مُنطلق (Prompt) — العودة إلى الموقع">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2.8c.55 5.2 2.9 7.6 8.1 8.2-5.2.6-7.55 3-8.1 8.2-.55-5.2-2.9-7.6-8.1-8.2 5.2-.6 7.55-3 8.1-8.2Z" fill="currentColor"/><circle cx="19.2" cy="4.9" r="1.5" fill="#fffdf8"/></svg>
+        </span>
+        <span class="leading-none">
+          <span class="flex items-baseline gap-1">
+            <strong class="text-[19px] font-black text-[#f7f2e9]">مُنطلق</strong>
+            <span class="brand-prompt">(Prompt)</span>
+          </span>
+          <span class="block text-[9px] text-[#9bb4aa] mt-1">لوحة تحكم المكتبة</span>
+        </span>
+      </a>
+    </div>
+
+    <div class="sidebar-scroll">
+      <div class="sidebar-section-label">مساحة العمل</div>
+      <nav class="space-y-0.5" aria-label="أقسام لوحة التحكم">
+        <button class="panel-btn is-active" type="button" data-panel="overview">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          نظرة عامة
+        </button>
+        <button class="panel-btn" type="button" data-panel="prompts">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/><path d="M8 8h8M8 12h5"/></svg>
+          إدارة المُنطلقات
+          <span class="nav-count" id="sidebarPromptCount">12</span>
+        </button>
+        <button class="panel-btn" type="button" data-panel="suggestions">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+          الاقتراحات
+          <span class="nav-badge hidden" id="sidebarSuggestionBadge">0</span>
+        </button>
+        <button class="panel-btn" type="button" data-panel="settings">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+          الإعدادات والنسخ
+        </button>
+      </nav>
+
+      <div class="sidebar-section-label">المكتبة</div>
+      <a class="panel-btn" href="index.html" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg>
+        عرض الموقع
+        <svg class="mr-auto opacity-50" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+      </a>
+
+      <div class="sidebar-note">
+        <div class="flex items-center justify-between gap-2 mb-1.5">
+          <span class="text-[9.5px] font-bold text-[#d9e5e0]">التخزين المحلي</span>
+          <span class="text-[8px] text-[#a8e6cf] flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-[#3eb18a]"></span> نشط</span>
+        </div>
+        <p class="text-[8.5px] leading-[1.7] text-[#92aca1]">كل التعديلات محفوظة في هذا المتصفح. صدّر نسخة احتياطية بانتظام.</p>
+        <div class="storage-meter mt-2.5"><span id="sidebarStorageBar" style="width:8%"></span></div>
+        <p class="text-[8px] text-[#7e9c90] mt-1.5" id="sidebarStorageText">جارٍ حساب الحجم…</p>
+      </div>
+
+      <div class="sidebar-user">
+        <span class="avatar">م</span>
+        <span class="leading-tight">
+          <strong class="block text-[10.5px] text-[#e7f0ec]">مدير المكتبة</strong>
+          <span class="text-[8px] text-[#8ba69b]">صلاحيات محلية كاملة</span>
+        </span>
+        <span class="mr-auto w-2 h-2 rounded-full bg-[#3eb18a]"></span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+  <!-- ===================== Main ===================== -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <button class="icon-btn lg:hidden" type="button" id="sidebarToggle" aria-label="فتح قائمة التحكم" aria-expanded="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="breadcrumb">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1V10Z"/></svg>
+        <span>لوحة التحكم</span>
+        <span>/</span>
+        <strong id="breadcrumbCurrent">نظرة عامة</strong>
+      </div>
+
+      <div class="top-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input type="search" id="adminGlobalSearch" placeholder="ابحث في المُنطلقات…" autocomplete="off" aria-label="بحث سريع في المُنطلقات">
+      </div>
+
+      <div class="save-state" title="يتم الحفظ تلقائيًا في المتصفح">
+        <span class="dot"></span>
+        <span>محفوظ محليًا</span>
+      </div>
+      <button class="btn btn-primary hidden sm:inline-flex" type="button" id="topAddPromptBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        مُنطلق جديد
+      </button>
+      <button class="icon-btn hidden sm:inline-grid" type="button" id="adminLogoutBtn" aria-label="تسجيل الخروج من لوحة التحكم" title="تسجيل الخروج">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
+      </button>
+      <div class="avatar-top" aria-hidden="true">م</div>
+    </header>
+
+    <main class="admin-content">
+      <!-- ===================== Overview ===================== -->
+      <section class="panel-view" data-panel-view="overview">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="inline-flex items-center gap-1 rounded-full bg-[#e6f2ec] text-[#1b6e56] border border-[#cfe7dc] px-2.5 py-1 text-[9px] font-bold">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#3eb18a]"></span>
+                مساحة محلية
+              </span>
+              <span class="text-[9.5px] text-[var(--ink-faint)]" id="todayDate"></span>
+            </div>
+            <h1 class="page-title">نظرة عامة</h1>
+            <p class="page-sub">كل ما يحدث في مكتبة مُنطلق (Prompt) — في شاشة واحدة.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-secondary" type="button" data-open-suggestions>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg>
+              مراجعة الاقتراحات
+            </button>
+            <button class="btn btn-primary" type="button" data-add-prompt>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              إضافة مُنطلق
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+          <article class="stat-card">
+            <div class="stat-icon bg-[#e2f0ea] text-[#0f6b53]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>
+            </div>
+            <p class="stat-label">إجمالي المُنطلقات</p>
+            <p class="stat-value" id="adminTotalPrompts">0</p>
+            <p class="stat-meta positive"><span class="w-1 h-1 rounded-full bg-[#3eb18a]"></span> جاهزة في المكتبة</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon bg-[#fbf0d8] text-[#996508]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            </div>
+            <p class="stat-label">التصنيفات النشطة</p>
+            <p class="stat-value" id="adminActiveCategories">0</p>
+            <p class="stat-meta">من أصل 8 تصنيفات</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon bg-[#fbe9e1] text-[#c45d3b]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+            </div>
+            <p class="stat-label">الاقتراحات الجديدة</p>
+            <p class="stat-value" id="adminSuggestionsCount">0</p>
+            <p class="stat-meta" id="adminSuggestionsMeta">بانتظار المراجعة</p>
+          </article>
+          <article class="stat-card">
+            <div class="stat-icon bg-[#f0eafa] text-[#7448bf]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>
+            </div>
+            <p class="stat-label">إجمالي الإعجابات</p>
+            <p class="stat-value" id="adminTotalLikes">0</p>
+            <p class="stat-meta positive"><span class="w-1 h-1 rounded-full bg-[#3eb18a]"></span> تفاعل محلي محفوظ</p>
+          </article>
+        </div>
+
+        <div class="grid xl:grid-cols-[1.45fr_.8fr] gap-4">
+          <div class="admin-card overflow-hidden">
+            <div class="section-head !mb-0 px-4 pt-4 pb-3">
+              <div>
+                <h2 class="section-title">أحدث المُنطلقات</h2>
+                <p class="section-note">آخر ما أضفته إلى المكتبة.</p>
+              </div>
+              <button class="btn btn-ghost !text-[10px] !px-2" type="button" data-go-prompts>
+                عرض الكل
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>المُنطلق</th>
+                    <th>التصنيف</th>
+                    <th>النموذج</th>
+                    <th>الإعجابات</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="recentPromptsBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div class="admin-card p-4">
+              <div class="section-head !mb-2">
+                <div>
+                  <h2 class="section-title">توزيع التصنيفات</h2>
+                  <p class="section-note">حجم المكتبة حسب المجال.</p>
+                </div>
+              </div>
+              <div id="categoryDistribution"></div>
+            </div>
+            <div class="admin-card p-4">
+              <div class="section-head !mb-1">
+                <div>
+                  <h2 class="section-title">الأكثر تفاعلًا</h2>
+                  <p class="section-note">المُنطلقات الأعلى إعجابًا.</p>
+                </div>
+              </div>
+              <div id="topPromptsList"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-2.5 mt-4">
+          <button class="quick-action" type="button" data-add-prompt>
+            <span class="quick-action-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>
+            <span><strong class="block text-[10.5px]">إضافة مُنطلق</strong><span class="text-[8.5px] text-[var(--ink-faint)]">أضف فكرة جديدة</span></span>
+          </button>
+          <button class="quick-action" type="button" data-open-suggestions>
+            <span class="quick-action-icon !bg-[#fbe9e1] !text-[#c45d3b]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg></span>
+            <span><strong class="block text-[10.5px]">مراجعة الاقتراحات</strong><span class="text-[8.5px] text-[var(--ink-faint)]">واردة من الزوار</span></span>
+          </button>
+          <button class="quick-action" type="button" data-export-json>
+            <span class="quick-action-icon !bg-[#fbf0d8] !text-[#996508]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></svg></span>
+            <span><strong class="block text-[10.5px]">تصدير نسخة</strong><span class="text-[8.5px] text-[var(--ink-faint)]">ملف JSON احتياطي</span></span>
+          </button>
+          <a class="quick-action" href="index.html" target="_blank" rel="noopener">
+            <span class="quick-action-icon !bg-[#f0eafa] !text-[#7448bf]"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg></span>
+            <span><strong class="block text-[10.5px]">عرض الموقع</strong><span class="text-[8.5px] text-[var(--ink-faint)]">معاينة واجهة الزوار</span></span>
+          </a>
+        </div>
+      </section>
+
+      <!-- ===================== Prompts ===================== -->
+      <section class="panel-view hidden" data-panel-view="prompts">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+          <div>
+            <p class="text-[9.5px] text-[var(--ink-faint)] mb-1">المكتبة / إدارة المحتوى</p>
+            <h1 class="page-title">إدارة المُنطلقات</h1>
+            <p class="page-sub">أضف، عدّل، أو احذف أي مُنطلق. كل التغييرات تُحفظ فورًا في متصفحك.</p>
+          </div>
+          <button class="btn btn-primary" type="button" data-add-prompt>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            إضافة مُنطلق جديد
+          </button>
+        </div>
+
+        <div class="admin-card p-3.5 mb-3">
+          <div class="grid sm:grid-cols-[1.6fr_.8fr_.8fr] gap-2.5">
+            <div class="relative">
+              <svg class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ink-faint)]" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input class="input-control !pr-9" id="adminPromptSearch" type="search" placeholder="ابحث بالعنوان، الوسم أو النص…" autocomplete="off" aria-label="بحث في جدول المُنطلقات">
+            </div>
+            <div class="select-wrap">
+              <select class="select-control" id="adminCategoryFilter" aria-label="تصفية حسب التصنيف">
+                <option value="all">كل التصنيفات</option>
+              </select>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            <div class="select-wrap">
+              <select class="select-control" id="adminDifficultyFilter" aria-label="تصفية حسب الصعوبة">
+                <option value="all">كل المستويات</option>
+                <option value="سهل">سهل</option>
+                <option value="متوسط">متوسط</option>
+                <option value="متقدم">متقدم</option>
+              </select>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-card overflow-hidden">
+          <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-[var(--line)]">
+            <div>
+              <h2 class="section-title">كل المُنطلقات</h2>
+              <p class="section-note"><span id="adminPromptsCount">0</span> نتيجة معروضة</p>
+            </div>
+            <button class="btn btn-ghost !text-[10px] !px-2" type="button" id="adminClearPromptFilters">مسح الفلاتر</button>
+          </div>
+          <div class="table-wrap">
+            <table class="min-w-[760px]">
+              <thead>
+                <tr>
+                  <th>المُنطلق</th>
+                  <th>التصنيف</th>
+                  <th>النموذج</th>
+                  <th>المستوى</th>
+                  <th>الإعجابات</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="promptsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state m-4" id="promptsEmpty">
+            <span class="w-11 h-11 rounded-xl bg-[var(--brand-soft)] text-[var(--brand)] grid place-items-center mx-auto mb-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13Z"/></svg>
+            </span>
+            <h3 class="text-[13px] font-black">لا توجد نتائج</h3>
+            <p class="text-[10.5px] text-[var(--ink-faint)] mt-1">جرّب تعديل البحث أو الفلاتر، أو أضف مُنطلقًا جديدًا.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== Suggestions ===================== -->
+      <section class="panel-view hidden" data-panel-view="suggestions">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
+          <div>
+            <p class="text-[9.5px] text-[var(--ink-faint)] mb-1">المكتبة / المشاركات</p>
+            <h1 class="page-title">الاقتراحات الواردة</h1>
+            <p class="page-sub">مُنطلقات أرسلها زوار الموقع من نموذج «شارك مُنطلقك». راجعها وحوّلها إلى المكتبة.</p>
+          </div>
+          <button class="btn btn-danger" type="button" id="clearSuggestionsBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>
+            حذف كل الاقتراحات
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 mb-3 flex-wrap">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-[#fffdf8] border border-[var(--line)] px-3 py-1.5 text-[9.5px] text-[var(--ink-faint)]">
+            <span class="w-1.5 h-1.5 rounded-full bg-[var(--coral)]"></span>
+            <span id="suggestionsCountText">0 اقتراح</span>
+          </span>
+          <span class="text-[9px] text-[var(--ink-faint)]">تُحفظ محليًا ولا تُرسل لأي خادم.</span>
+        </div>
+
+        <div class="grid xl:grid-cols-2 gap-3" id="suggestionsList"></div>
+        <div class="empty-state" id="suggestionsEmpty">
+          <span class="w-11 h-11 rounded-xl bg-[var(--brand-soft)] text-[var(--brand)] grid place-items-center mx-auto mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8M8 13h5"/></svg>
+          </span>
+          <h3 class="text-[13px] font-black">لا توجد اقتراحات بعد</h3>
+          <p class="text-[10.5px] text-[var(--ink-faint)] mt-1 max-w-sm mx-auto">عندما يرسل زائر مُنطلقًا من الصفحة الرئيسية، سيظهر هنا مباشرة للمراجعة.</p>
+          <a class="btn btn-secondary mt-4 !text-[10.5px]" href="index.html#suggest" target="_blank" rel="noopener">جرّب نموذج الاقتراح</a>
+        </div>
+      </section>
+
+      <!-- ===================== Settings ===================== -->
+      <section class="panel-view hidden" data-panel-view="settings">
+        <div class="mb-5">
+          <p class="text-[9.5px] text-[var(--ink-faint)] mb-1">الإدارة / البيانات</p>
+          <h1 class="page-title">الإعدادات والنسخ الاحتياطي</h1>
+          <p class="page-sub">تحكّم في بيانات المكتبة المحلية، وصدّر نسخة آمنة متى شئت.</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-4">
+          <div class="admin-card p-5">
+            <div class="flex items-start gap-3 mb-4">
+              <span class="w-10 h-10 rounded-xl bg-[var(--brand-soft)] text-[var(--brand)] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m-5-5 5 5 5-5M4 21h16"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">تصدير نسخة احتياطية</h2>
+                <p class="section-note">نزّل ملف JSON يحتوي كل المُنطلقات الحالية.</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-[var(--ink-soft)] leading-[1.9] mb-4">الملف يصلح لاستيراده لاحقًا أو نشره في مسار <code class="px-1 py-0.5 rounded bg-[#f3eee5] text-[10px]" dir="ltr">data/prompts.json</code>. ننصح بالتصدير بعد كل مجموعة تعديلات مهمة.</p>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary" type="button" data-export-json>تصدير ملف JSON</button>
+              <button class="btn btn-secondary" type="button" id="copyJsonBtn">نسخ إلى الحافظة</button>
+            </div>
+          </div>
+
+          <div class="admin-card p-5">
+            <div class="flex items-start gap-3 mb-4">
+              <span class="w-10 h-10 rounded-xl bg-[#fbf0d8] text-[#996508] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m-5 5 5-5 5 5M4 21h16"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">استيراد بيانات</h2>
+                <p class="section-note">استبدل المكتبة الحالية بملف JSON صالح.</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-[var(--ink-soft)] leading-[1.9] mb-4">يُتحقق من بنية الملف قبل الحفظ. إذا كان الملف ناقص الحقول، تُضاف القيم الافتراضية بدل رفضه بالكامل. سيتم استبدال البيانات الحالية.</p>
+            <input class="hidden" type="file" id="importFileInput" accept="application/json,.json">
+            <button class="btn btn-secondary" type="button" id="importJsonBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m-5 5 5-5 5 5M4 21h16"/></svg>
+              اختيار ملف JSON
+            </button>
+          </div>
+
+          <div class="admin-card p-5">
+            <div class="flex items-start gap-3 mb-4">
+              <span class="w-10 h-10 rounded-xl bg-[#f0eafa] text-[#7448bf] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">حالة التخزين</h2>
+                <p class="section-note">كل شيء محفوظ في LocalStorage داخل متصفحك.</p>
+              </div>
+            </div>
+            <div class="space-y-2.5">
+              <div class="flex items-center justify-between text-[10.5px]"><span class="text-[var(--ink-faint)]">عدد المُنطلقات</span><strong id="storagePromptsCount">12</strong></div>
+              <div class="flex items-center justify-between text-[10.5px]"><span class="text-[var(--ink-faint)]">عدد الاقتراحات</span><strong id="storageSuggestionsCount">0</strong></div>
+              <div class="flex items-center justify-between text-[10.5px]"><span class="text-[var(--ink-faint)]">حجم البيانات</span><strong id="storageSizeText">—</strong></div>
+              <div class="storage-meter mt-1"><span id="storageBar" style="width:8%"></span></div>
+              <p class="text-[9px] leading-[1.7] text-[var(--ink-faint)]">المساحة التقديرية المتاحة لكل نطاق تختلف حسب المتصفح. حذف بيانات المتصفح يمسح كل شيء.</p>
+            </div>
+          </div>
+
+          <div class="admin-card p-5 !border-[#f0d6ca]">
+            <div class="flex items-start gap-3 mb-4">
+              <span class="w-10 h-10 rounded-xl bg-[#fbe9e1] text-[#c45d3b] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">إعادة التعيين</h2>
+                <p class="section-note">استعد البيانات الأصلية للمكتبة.</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-[var(--ink-soft)] leading-[1.9] mb-4">سيتم حذف كل التعديلات المحلية وإعادة تحميل المُنطلقات الاثني عشر الأساسية من ملف البيانات. لا يمكن التراجع إلا إذا صدّرت نسخة احتياطية أولًا.</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button class="btn btn-danger" type="button" id="resetDataBtn">استعادة البيانات الافتراضية</button>
+              <button class="btn btn-ghost !text-[10.5px]" type="button" id="clearSuggestionsSettingsBtn">حذف الاقتراحات فقط</button>
+            </div>
+          </div>
+
+          <div class="admin-card p-5 lg:col-span-2 !border-[#cfe7dc]">
+            <div class="flex items-start gap-3 mb-4">
+              <span class="w-10 h-10 rounded-xl bg-[var(--brand-soft)] text-[var(--brand)] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">كلمة مرور لوحة التحكم</h2>
+                <p class="section-note">غيّر كلمة المرور التي تُطلب عند فتح لوحة التحكم.</p>
+              </div>
+            </div>
+
+            <form id="adminPasswordForm" novalidate>
+              <div class="grid sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="field-label" for="currentAdminPassword">كلمة المرور الحالية <span class="req">*</span></label>
+                  <input class="input-control" id="currentAdminPassword" type="password" autocomplete="current-password" maxlength="64" placeholder="أدخل كلمة المرور الحالية" required>
+                </div>
+                <div>
+                  <label class="field-label" for="newAdminPassword">كلمة المرور الجديدة <span class="req">*</span></label>
+                  <input class="input-control" id="newAdminPassword" type="password" autocomplete="new-password" minlength="5" maxlength="64" placeholder="5 أحرف أو أرقام على الأقل" required>
+                </div>
+                <div>
+                  <label class="field-label" for="confirmAdminPassword">تأكيد كلمة المرور <span class="req">*</span></label>
+                  <input class="input-control" id="confirmAdminPassword" type="password" autocomplete="new-password" minlength="5" maxlength="64" placeholder="أعد كتابة الكلمة الجديدة" required>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 mt-3">
+                <button class="btn btn-primary" type="submit" id="changeAdminPasswordBtn">تحديث كلمة المرور</button>
+                <button class="btn btn-secondary" type="button" id="adminLogoutSettingsBtn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></svg>
+                  تسجيل الخروج
+                </button>
+                <span class="default-password-hint" id="defaultPasswordHint">كلمة المرور الافتراضية الحالية: <strong dir="ltr">11111</strong></span>
+              </div>
+
+              <p class="password-status" id="passwordChangeMessage" role="status" aria-live="polite" hidden></p>
+            </form>
+
+            <p class="text-[9px] leading-[1.8] text-[var(--ink-faint)] mt-3">تُحفظ بصمة كلمة المرور في LocalStorage داخل هذا المتصفح. ولأن الموقع ثابت، فهذه حماية للواجهة وليست بديلًا عن مصادقة خادم.</p>
+          </div>
+        </div>
+
+        <div class="admin-card p-5 mt-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="flex items-start gap-3">
+              <span class="w-10 h-10 rounded-xl bg-[#e2f0ea] text-[var(--brand)] grid place-items-center shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+              </span>
+              <div>
+                <h2 class="section-title">عن هذه النسخة</h2>
+                <p class="section-note">مُنطلق (Prompt) — نسخة static عربية بالكامل.</p>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2 text-[9px]">
+              <span class="rounded-full border border-[var(--line)] bg-[#fffdf8] px-2.5 py-1 text-[var(--ink-faint)]">Auto RTL / LTR</span>
+              <span class="rounded-full border border-[var(--line)] bg-[#fffdf8] px-2.5 py-1 text-[var(--ink-faint)]">LocalStorage</span>
+              <span class="rounded-full border border-[var(--line)] bg-[#fffdf8] px-2.5 py-1 text-[var(--ink-faint)]">HTML + Tailwind</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="admin-footer">
+        <p>© <span id="adminFooterYear">2026</span> مُنطلق (Prompt) — لوحة التحكم. صُنعت للعمل محليًا.</p>
+        <p class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#3eb18a]"></span> التغييرات تُحفظ في هذا المتصفح فقط</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- ===================== Editor Dialog ===================== -->
+  <dialog id="promptEditorDialog" aria-labelledby="editorTitle">
+    <form class="dialog-shell" id="promptForm" novalidate>
+      <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--line)] bg-[#fffdf8] shrink-0">
+        <div class="flex items-center gap-3">
+          <span class="w-9 h-9 rounded-lg bg-[var(--brand-soft)] text-[var(--brand)] grid place-items-center" aria-hidden="true">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </span>
+          <div>
+            <h2 class="text-[13px] font-black" id="editorTitle">إضافة مُنطلق جديد</h2>
+            <p class="text-[9px] text-[var(--ink-faint)]">حقول المحتوى الثلاثة تدعم RTL / LTR تلقائيًا.</p>
+          </div>
+        </div>
+        <button class="icon-btn !w-8 !h-8" type="button" data-close-editor aria-label="إغلاق محرر المُنطلق">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+        <input type="hidden" id="fieldId">
+        <div class="grid sm:grid-cols-[1.5fr_.8fr] gap-3 mb-3">
+          <div>
+            <label class="field-label" for="fieldTitle">عنوان المُنطلق <span class="req">*</span></label>
+            <input class="input-control" id="fieldTitle" type="text" maxlength="100" placeholder="مثال: مساعد تحرير البريد المهني" required>
+          </div>
+          <div>
+            <label class="field-label" for="fieldCategory">التصنيف <span class="req">*</span></label>
+            <div class="select-wrap">
+              <select class="select-control" id="fieldCategory" required></select>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3 mb-3">
+          <div>
+            <label class="field-label" for="fieldModel">النموذج</label>
+            <input class="input-control" id="fieldModel" type="text" list="modelOptions" placeholder="ChatGPT" maxlength="40">
+            <datalist id="modelOptions">
+              <option value="ChatGPT"></option>
+              <option value="Claude"></option>
+              <option value="Gemini"></option>
+              <option value="DeepSeek"></option>
+              <option value="Perplexity"></option>
+              <option value="Midjourney"></option>
+            </datalist>
+          </div>
+          <div>
+            <label class="field-label" for="fieldDifficulty">المستوى</label>
+            <div class="select-wrap">
+              <select class="select-control" id="fieldDifficulty">
+                <option value="سهل">سهل</option>
+                <option value="متوسط">متوسط</option>
+                <option value="متقدم">متقدم</option>
+              </select>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="fieldLikes">الإعجابات</label>
+            <input class="input-control" id="fieldLikes" type="number" min="0" step="1" value="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label" for="fieldDescription">وصف مختصر <span class="text-[var(--ink-faint)] font-normal">(يظهر على البطاقة)</span></label>
+          <textarea class="textarea-control" id="fieldDescription" rows="2" maxlength="220" placeholder="وصف في سطر أو سطرين يوضح قيمة المُنطلق." style="min-height:66px"></textarea>
+        </div>
+
+        <div class="mb-3" data-dir-wrap>
+          <div class="flex items-center justify-between gap-3">
+            <label class="field-label !mb-1.5" for="fieldPromptText">نص المُنطلق <span class="req">*</span></label>
+            <span class="dir-badge" data-dir-badge data-state="rtl">RTL · تلقائي</span>
+          </div>
+          <textarea class="textarea-control" id="fieldPromptText" dir="auto" data-auto-dir rows="6" maxlength="4000" placeholder="اكتب التعليمات الكاملة… استخدم [الأقواس] للعناصر التي تُستبدل لاحقًا." required></textarea>
+        </div>
+
+        <div class="mb-3" data-dir-wrap>
+          <div class="flex items-center justify-between gap-3">
+            <label class="field-label !mb-1.5" for="fieldExplanation">الشرح وطريقة الاستخدام <span class="req">*</span></label>
+            <span class="dir-badge" data-dir-badge data-state="rtl">RTL · تلقائي</span>
+          </div>
+          <textarea class="textarea-control" id="fieldExplanation" dir="auto" data-auto-dir rows="4" maxlength="2500" placeholder="اشرح متى يُستخدم، وما الذي يجب تغييره، وأي نصيحة تجعل النتيجة أفضل." required></textarea>
+        </div>
+
+        <div class="mb-3" data-dir-wrap>
+          <div class="flex items-center justify-between gap-3">
+            <label class="field-label !mb-1.5" for="fieldExampleResult">مثال النتيجة <span class="req">*</span></label>
+            <span class="dir-badge" data-dir-badge data-state="rtl">RTL · تلقائي</span>
+          </div>
+          <textarea class="textarea-control" id="fieldExampleResult" dir="auto" data-auto-dir rows="5" maxlength="5000" placeholder="ألصق مثالًا حقيقيًا أو واقعيًا على النتيجة." required></textarea>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="field-label" for="fieldExampleType">نوع المثال</label>
+            <input class="input-control" id="fieldExampleType" type="text" list="exampleTypeOptions" placeholder="نص، كود، خطة…" maxlength="30">
+            <datalist id="exampleTypeOptions">
+              <option value="نص"></option>
+              <option value="كود"></option>
+              <option value="خطة"></option>
+              <option value="جدول"></option>
+              <option value="شرح"></option>
+              <option value="صورة"></option>
+              <option value="تقرير"></option>
+              <option value="صفحة"></option>
+              <option value="تقويم"></option>
+              <option value="حوار"></option>
+              <option value="قائمة تحقق"></option>
+            </datalist>
+          </div>
+          <div>
+            <label class="field-label" for="fieldTags">الوسوم</label>
+            <input class="input-control" id="fieldTags" type="text" maxlength="160" placeholder="مفصولة بفواصل: مقالات، تحرير، محتوى">
+          </div>
+        </div>
+
+        <div class="mt-3 rounded-lg bg-[#f8f4ec] border border-[#eee5d7] p-2.5 flex items-start gap-2">
+          <svg class="shrink-0 mt-0.5 text-[var(--ink-faint)]" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+          <p class="text-[9px] leading-[1.7] text-[var(--ink-faint)]">الاتجاه يُحسب تلقائيًا: العربي من اليمين، الإنجليزي والكود من اليسار. لا تغيّر <span dir="ltr" class="font-bold">dir</span> يدويًا؛ فقط اكتب النص.</p>
+        </div>
+      </div>
+
+      <div class="dialog-foot">
+        <p class="text-[9px] text-[var(--ink-faint)] flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#3eb18a]"></span>
+          حفظ تلقائي في LocalStorage
+        </p>
+        <div class="flex items-center gap-2">
+          <button class="btn btn-secondary" type="button" data-close-editor>إلغاء</button>
+          <button class="btn btn-primary" type="submit" id="editorSaveBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></svg>
+            حفظ المُنطلق
+          </button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ===================== Confirm Dialog ===================== -->
+  <dialog id="confirmDialog" class="confirm-dialog" aria-labelledby="confirmTitle">
+    <div class="p-5">
+      <span class="confirm-icon bg-[#fff0e9] text-[#c25530]" id="confirmIcon">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2m-9 0 1 14h8l1-14"/></svg>
+      </span>
+      <h2 class="text-[16px] font-black" id="confirmTitle">تأكيد الحذف</h2>
+      <p class="text-[11.5px] text-[var(--ink-soft)] leading-[1.9] mt-2" id="confirmMessage"></p>
+      <div class="flex items-center justify-end gap-2 mt-5">
+        <button class="btn btn-secondary" type="button" id="confirmCancelBtn">إلغاء</button>
+        <button class="btn btn-danger" type="button" id="confirmActionBtn">تأكيد</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="js/app.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

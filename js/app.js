@@ -232,7 +232,7 @@
       label: 'كتابة ومحتوى',
       short: 'كتابة',
       icon: 'pen',
-      color: '#c45d3b',
+      color: '#a54a2c',
       tint: '#faeae3',
       description: 'مقالات، سوشيال ميديا، تحرير وصياغة'
     },
@@ -268,7 +268,7 @@
       label: 'أعمال وإنتاجية',
       short: 'أعمال',
       icon: 'briefcase',
-      color: '#996508',
+      color: '#8a5903',
       tint: '#fbf0d8',
       description: 'اجتماعات، عروض، تنظيم مهام وقرارات'
     },
@@ -277,7 +277,7 @@
       label: 'تصميم وإبداع',
       short: 'تصميم',
       icon: 'palette',
-      color: '#b54b74',
+      color: '#9c3a60',
       tint: '#fae8ef',
       description: 'هوية بصرية، صور، أفكار واتجاهات فنية'
     },
@@ -514,6 +514,12 @@
     return value.trim();
   }
 
+  /* Visitor suggestion images use the same limits as the admin editor. */
+  const SUGGESTION_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+  const SUGGESTION_IMAGE_MAX_BYTES = 8 * 1024 * 1024;
+  const SUGGESTION_IMAGE_MAX_DIMENSION = 1400;
+  const SUGGESTION_IMAGE_MAX_DATA_LENGTH = 900000;
+
   function normalizePrompt(prompt, index = 0) {
     const source = prompt && typeof prompt === 'object' ? prompt : {};
     const category = CATEGORY_MAP[source.category] ? source.category : 'writing';
@@ -729,7 +735,9 @@
       visible: 9,
       favorites: new Set(),
       liked: new Set(),
-      currentId: null
+      currentId: null,
+      suggestionImage: '',
+      suggestionImageBusy: false
     };
 
     const elements = {
@@ -756,6 +764,14 @@
       suggestionForm: document.getElementById('suggestionForm'),
       suggestionCategory: document.getElementById('suggestCategory'),
       suggestionSuccess: document.getElementById('suggestionSuccess'),
+      suggestionImageInput: document.getElementById('suggestImage'),
+      suggestionImageDropzone: document.getElementById('suggestImageDropzone'),
+      suggestionImagePreview: document.getElementById('suggestImagePreview'),
+      suggestionImagePreviewImg: document.getElementById('suggestImagePreviewImg'),
+      suggestionImageMeta: document.getElementById('suggestImageMeta'),
+      suggestionImageStatus: document.getElementById('suggestImageStatus'),
+      suggestionImagePasteBtn: document.getElementById('suggestImagePasteBtn'),
+      suggestionImageRemove: document.getElementById('suggestImageRemove'),
       mobileMenu: document.getElementById('mobileMenu'),
       mobileMenuBtn: document.getElementById('mobileMenuBtn'),
       siteHeader: document.getElementById('siteHeader'),
@@ -791,6 +807,7 @@
     bindLibraryEvents();
     bindDialogEvents();
     bindSuggestionForm();
+    setupSuggestionImage();
     refreshResults({ resetVisible: true });
     setupReveal();
     updateFooterYear();
@@ -1596,6 +1613,11 @@
       elements.suggestionForm.addEventListener('submit', (event) => {
         event.preventDefault();
 
+        if (app.suggestionImageBusy) {
+          toast('انتظر انتهاء معالجة الصورة ثم أرسل الاقتراح.', 'info');
+          return;
+        }
+
         const title = document.getElementById('suggestTitle')?.value.trim() || '';
         const category = elements.suggestionCategory?.value || 'writing';
         const author = document.getElementById('suggestAuthor')?.value.trim() || '';
@@ -1603,6 +1625,7 @@
         const promptText = document.getElementById('suggestPrompt')?.value.trim() || '';
         const explanation = document.getElementById('suggestExplanation')?.value.trim() || '';
         const exampleResult = document.getElementById('suggestExample')?.value.trim() || '';
+        const exampleImage = app.suggestionImage;
 
         if (!title || !promptText) {
           toast('أضف اسم المُنطلق ونصه قبل الإرسال.', 'error');
@@ -1621,6 +1644,8 @@
           prompt_text: promptText,
           explanation,
           example_result: exampleResult,
+          example_image: exampleImage,
+          example_type: exampleImage ? 'صورة' : 'نص',
           status: 'pending',
           created_at: new Date().toISOString()
         };
@@ -1632,6 +1657,8 @@
         }
 
         elements.suggestionForm.reset();
+        clearSuggestionImage();
+        setSuggestionImageStatus('');
         document.querySelectorAll('#suggestionForm textarea[data-auto-dir]').forEach(syncTextareaDirection);
         if (elements.suggestionSuccess) {
           elements.suggestionSuccess.classList.remove('hidden');
@@ -1641,6 +1668,257 @@
         toast('شكرًا لك! حُفظ اقتراحك وسيظهر في لوحة التحكم.');
       });
     }
+
+    /* ----------------------------------------------------------------------
+       Suggestion example image (upload, drag & drop, clipboard paste)
+       ---------------------------------------------------------------------- */
+    function setSuggestionImageStatus(message = '', tone = 'info') {
+      if (!elements.suggestionImageStatus) return;
+      elements.suggestionImageStatus.textContent = message;
+      elements.suggestionImageStatus.classList.remove('is-info', 'is-error', 'is-success');
+      elements.suggestionImageStatus.hidden = !message;
+      if (message) elements.suggestionImageStatus.classList.add(`is-${tone}`);
+    }
+
+    function setSuggestionImageBusy(busy) {
+      app.suggestionImageBusy = Boolean(busy);
+      elements.suggestionImageDropzone?.classList.toggle('is-busy', app.suggestionImageBusy);
+      if (elements.suggestionImagePasteBtn) elements.suggestionImagePasteBtn.disabled = app.suggestionImageBusy;
+    }
+
+    function setSuggestionImage(dataUrl, meta = {}) {
+      app.suggestionImage = dataUrl || '';
+      const hasImage = Boolean(app.suggestionImage);
+
+      if (elements.suggestionImageDropzone) elements.suggestionImageDropzone.hidden = hasImage;
+      if (elements.suggestionImagePreview) elements.suggestionImagePreview.hidden = !hasImage;
+
+      if (elements.suggestionImagePreviewImg) {
+        if (hasImage) elements.suggestionImagePreviewImg.src = app.suggestionImage;
+        else elements.suggestionImagePreviewImg.removeAttribute('src');
+      }
+
+      if (elements.suggestionImageMeta) {
+        const parts = [];
+        if (meta.width && meta.height) parts.push(`${meta.width}×${meta.height}`);
+        if (meta.bytes) parts.push(`${Math.max(1, Math.round(meta.bytes / 1024))} كيلوبايت`);
+        elements.suggestionImageMeta.textContent = hasImage ? parts.join(' · ') : '';
+      }
+    }
+
+    function clearSuggestionImage() {
+      setSuggestionImage('');
+      elements.suggestionImageDropzone?.classList.remove('is-dragover', 'is-busy');
+      if (elements.suggestionImageInput) elements.suggestionImageInput.value = '';
+      setSuggestionImageStatus('');
+    }
+
+    function readImageAsDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error || new Error('read-failed'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function loadImageSource(source) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('image-load-failed'));
+        image.src = source;
+      });
+    }
+
+    function compressSuggestionImage(image) {
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+
+      const naturalWidth = image.naturalWidth || image.width;
+      const naturalHeight = image.naturalHeight || image.height;
+      if (!naturalWidth || !naturalHeight) return null;
+
+      let width = naturalWidth;
+      let height = naturalHeight;
+      const scale = Math.min(1, SUGGESTION_IMAGE_MAX_DIMENSION / Math.max(width, height));
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+
+      const qualities = [0.86, 0.74, 0.62, 0.5];
+      let bestUrl = '';
+
+      for (let index = 0; index < qualities.length; index += 1) {
+        canvas.width = width;
+        canvas.height = height;
+        context.clearRect(0, 0, width, height);
+        context.drawImage(image, 0, 0, width, height);
+
+        let url = canvas.toDataURL('image/webp', qualities[index]);
+        if (!url.startsWith('data:image/webp')) {
+          context.globalCompositeOperation = 'destination-over';
+          context.fillStyle = '#ffffff';
+          context.fillRect(0, 0, width, height);
+          context.globalCompositeOperation = 'source-over';
+          url = canvas.toDataURL('image/jpeg', qualities[index]);
+        }
+
+        bestUrl = url;
+        if (url.length <= SUGGESTION_IMAGE_MAX_DATA_LENGTH) break;
+        if (Math.max(width, height) <= 720) break;
+        if (index === qualities.length - 1) break;
+
+        width = Math.max(1, Math.round(width * 0.85));
+        height = Math.max(1, Math.round(height * 0.85));
+      }
+
+      return { dataUrl: bestUrl, width, height };
+    }
+
+    function dataUrlSize(dataUrl) {
+      const base64 = String(dataUrl || '').split(',')[1] || '';
+      return Math.round((base64.length * 3) / 4);
+    }
+
+    async function processSuggestionImage(file) {
+      if (!file || app.suggestionImageBusy) return;
+
+      if (!SUGGESTION_IMAGE_TYPES.includes(file.type)) {
+        setSuggestionImageStatus('صيغة غير مدعومة. استخدم PNG أو JPG أو WebP أو GIF.', 'error');
+        return;
+      }
+      if (file.size > SUGGESTION_IMAGE_MAX_BYTES) {
+        setSuggestionImageStatus('حجم الصورة كبير جدًا. الحد الأقصى 8 ميجابايت.', 'error');
+        return;
+      }
+
+      setSuggestionImageBusy(true);
+      setSuggestionImageStatus('جارٍ ضغط الصورة وتحضيرها…', 'info');
+
+      try {
+        const original = await readImageAsDataURL(file);
+        const image = await loadImageSource(original);
+        const compressed = compressSuggestionImage(image);
+
+        if (!compressed || !isExampleImage(compressed.dataUrl)) {
+          throw new Error('compression-failed');
+        }
+
+        setSuggestionImage(compressed.dataUrl, {
+          width: compressed.width,
+          height: compressed.height,
+          bytes: dataUrlSize(compressed.dataUrl)
+        });
+        setSuggestionImageStatus('تم تجهيز الصورة وستُرفق مع الاقتراح.', 'success');
+      } catch (error) {
+        setSuggestionImageStatus('تعذّرت معالجة الصورة. جرّب صورة أخرى بصيغة PNG أو JPG.', 'error');
+      } finally {
+        setSuggestionImageBusy(false);
+      }
+    }
+
+    function handleSuggestionPaste(event) {
+      if (app.suggestionImageBusy) return;
+      const clipboard = event.clipboardData;
+      if (!clipboard) return;
+
+      const items = Array.from(clipboard.items || []);
+      const imageItem = items.find((item) => item.kind === 'file' && String(item.type).startsWith('image/'));
+      if (!imageItem) return;
+
+      const target = event.target;
+      const isTextField = target instanceof HTMLElement && (
+        target.tagName === 'TEXTAREA'
+        || (target.tagName === 'INPUT' && !['file', 'checkbox', 'radio', 'button', 'submit', 'range', 'color'].includes(target.type))
+      );
+      const hasPlainText = Array.from(clipboard.types || []).includes('text/plain');
+
+      /* Keep normal text pasting intact when the clipboard carries both text and an image. */
+      if (isTextField && hasPlainText) return;
+
+      const file = imageItem.getAsFile();
+      if (!file) return;
+
+      event.preventDefault();
+      setSuggestionImageStatus('تم لصق صورة من الحافظة، جارٍ معالجتها…', 'info');
+      processSuggestionImage(file);
+    }
+
+    async function pasteSuggestionImageFromClipboard() {
+      if (app.suggestionImageBusy) return;
+
+      if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+        setSuggestionImageStatus('هذا المتصفح لا يدعم اللصق المباشر. انسخ الصورة ثم اضغط Ctrl + V داخل النموذج.', 'info');
+        return;
+      }
+
+      try {
+        const clipboardItems = await navigator.clipboard.read();
+        for (const item of clipboardItems) {
+          const type = item.types.find((candidate) => SUGGESTION_IMAGE_TYPES.includes(candidate));
+          if (!type) continue;
+          const blob = await item.getType(type);
+          const file = new File([blob], `clipboard.${type.split('/')[1]}`, { type });
+          processSuggestionImage(file);
+          return;
+        }
+        setSuggestionImageStatus('لا توجد صورة في الحافظة. انسخ صورة أولًا ثم أعد المحاولة.', 'error');
+      } catch (error) {
+        setSuggestionImageStatus('لم يُسمح بالوصول إلى الحافظة. اضغط Ctrl + V داخل النموذج للصق الصورة.', 'info');
+      }
+    }
+
+    function setupSuggestionImage() {
+      if (!elements.suggestionImageDropzone || !elements.suggestionImageInput) return;
+
+      elements.suggestionImageDropzone.addEventListener('click', () => {
+        if (!app.suggestionImageBusy) elements.suggestionImageInput.click();
+      });
+
+      elements.suggestionImageDropzone.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        if (!app.suggestionImageBusy) elements.suggestionImageInput.click();
+      });
+
+      elements.suggestionImageInput.addEventListener('change', (event) => {
+        const file = event.target.files && event.target.files[0];
+        processSuggestionImage(file);
+        event.target.value = '';
+      });
+
+      ['dragenter', 'dragover'].forEach((type) => {
+        elements.suggestionImageDropzone.addEventListener(type, (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!app.suggestionImageBusy) elements.suggestionImageDropzone.classList.add('is-dragover');
+        });
+      });
+
+      ['dragleave', 'dragend'].forEach((type) => {
+        elements.suggestionImageDropzone.addEventListener(type, () => {
+          elements.suggestionImageDropzone.classList.remove('is-dragover');
+        });
+      });
+
+      elements.suggestionImageDropzone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        elements.suggestionImageDropzone.classList.remove('is-dragover');
+        const file = event.dataTransfer?.files && event.dataTransfer.files[0];
+        processSuggestionImage(file);
+      });
+
+      elements.suggestionImagePasteBtn?.addEventListener('click', pasteSuggestionImageFromClipboard);
+      elements.suggestionImageRemove?.addEventListener('click', () => {
+        clearSuggestionImage();
+        setSuggestionImageStatus('أُزيلت الصورة. يمكنك رفع صورة أخرى.', 'info');
+      });
+
+      elements.suggestionForm?.addEventListener('paste', handleSuggestionPaste);
+    }
+
 
     /* ----------------------------------------------------------------------
        Reveal animations

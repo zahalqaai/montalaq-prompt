@@ -23,7 +23,7 @@
             ink: '#172720',
             paper: '#f7f2e9',
             brand: { DEFAULT: '#0f6b53', dark: '#0a4e3c', soft: '#e2f0ea' },
-            coral: '#e9764c',
+            coral: '#b8451f',
             sand: '#e7ddcd',
             gold: '#e4b660'
           },
@@ -46,12 +46,12 @@
       --paper-deep: #efe7d9;
       --card: #fffdf8;
       --ink: #172720;
-      --ink-soft: #4d5f57;
-      --ink-faint: #7b8a83;
+      --ink-soft: #33443d;
+      --ink-faint: #46564f;
       --brand: #0f6b53;
       --brand-dark: #0a4e3c;
       --brand-soft: #e2f0ea;
-      --coral: #e9764c;
+      --coral: #b8451f;
       --coral-soft: #fbe9e1;
       --gold: #e4b660;
       --line: #e4dccf;
@@ -79,7 +79,7 @@
       background:
         radial-gradient(ellipse 70% 55% at 12% 4%, rgba(228, 182, 96, .14), transparent 62%),
         radial-gradient(ellipse 60% 50% at 92% 22%, rgba(15, 107, 83, .10), transparent 65%),
-        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(233, 118, 76, .07), transparent 70%);
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(184, 69, 31, .07), transparent 70%);
     }
     body::after {
       content: "";
@@ -201,7 +201,7 @@
     .btn:hover { transform: translateY(-2px); }
     .btn:active { transform: translateY(0); }
     .btn:focus-visible, .icon-btn:focus-visible, .nav-link:focus-visible, a:focus-visible, button:focus-visible {
-      outline: 3px solid rgba(233, 118, 76, .5);
+      outline: 3px solid rgba(184, 69, 31, .5);
       outline-offset: 3px;
     }
     .btn-primary {
@@ -216,7 +216,7 @@
       border: 1px solid var(--line-strong);
     }
     .btn-secondary:hover { background: #fffdf8; border-color: #bdb09c; }
-    .btn-coral { color: #fff; background: var(--coral); box-shadow: 0 14px 28px -16px rgba(233, 118, 76, .8); }
+    .btn-coral { color: #fff; background: var(--coral); box-shadow: 0 14px 28px -16px rgba(184, 69, 31, .8); }
     .btn-coral:hover { background: #d8623b; }
     .btn-ghost { color: var(--ink-soft); background: transparent; }
     .btn-ghost:hover { background: rgba(23, 39, 32, .06); color: var(--ink); }
@@ -270,7 +270,7 @@
       position: relative;
       color: var(--brand-dark);
       white-space: nowrap;
-      background: linear-gradient(transparent 66%, rgba(233, 118, 76, .21) 66%, rgba(233, 118, 76, .21) 92%, transparent 92%);
+      background: linear-gradient(transparent 66%, rgba(184, 69, 31, .21) 66%, rgba(184, 69, 31, .21) 92%, transparent 92%);
       padding-inline: 2px;
     }
     .brand-term-latin {
@@ -290,7 +290,7 @@
       isolation: isolate;
       background:
         radial-gradient(circle at 82% 18%, rgba(228, 182, 96, .24), transparent 37%),
-        radial-gradient(circle at 18% 86%, rgba(233, 118, 76, .2), transparent 42%),
+        radial-gradient(circle at 18% 86%, rgba(184, 69, 31, .2), transparent 42%),
         linear-gradient(150deg, #173f33 0%, #0b2f26 62%, #08251e 100%);
       box-shadow: 0 38px 80px -40px rgba(8, 37, 30, .8);
       border: 1px solid rgba(255, 255, 255, .08);
@@ -424,7 +424,7 @@
     .dir-chip[data-dir="ltr"], .dir-chip[data-state="ltr"] {
       color: #9a4b2d;
       background: #fcece4;
-      border-color: rgba(233, 118, 76, .2);
+      border-color: rgba(184, 69, 31, .2);
     }
 
     .prompt-content {
@@ -556,7 +556,7 @@
       font-size: 14px;
       transition: border-color .2s, box-shadow .2s;
     }
-    .search-input::placeholder { color: #98a49e; }
+    .search-input::placeholder { color: #55655e; }
     .search-input:focus {
       outline: none;
       border-color: var(--brand);
@@ -620,7 +620,7 @@
     }
     .pill:hover { background: #fffdf8; border-color: var(--line-strong); color: var(--ink); }
     .pill.is-active { background: var(--ink); border-color: var(--ink); color: #fffdf8; }
-    .fav-toggle.is-active { color: var(--coral); border-color: rgba(233, 118, 76, .35); background: var(--coral-soft); }
+    .fav-toggle.is-active { color: var(--coral); border-color: rgba(184, 69, 31, .35); background: var(--coral-soft); }
 
     .active-chip {
       display: inline-flex;
@@ -670,13 +670,13 @@
       border-radius: 9px;
       border: 1px solid var(--line);
       background: rgba(255, 253, 248, .75);
-      color: #9aa59f;
+      color: #55655e;
       display: grid;
       place-items: center;
       transition: all .2s;
     }
-    .fav-btn:hover { color: var(--coral); border-color: rgba(233,118,76,.35); }
-    .fav-btn.is-active { color: var(--coral); background: var(--coral-soft); border-color: rgba(233,118,76,.24); }
+    .fav-btn:hover { color: var(--coral); border-color: rgba(184,69,31,.35); }
+    .fav-btn.is-active { color: var(--coral); background: var(--coral-soft); border-color: rgba(184,69,31,.24); }
     .fav-btn.is-active svg { fill: currentColor; }
     .card-title {
       font-size: 18px;
@@ -693,7 +693,7 @@
       border: 1px solid #ebe4d7;
       border-radius: 12px;
       padding: 11px 12px;
-      color: #53625b;
+      color: #3f514a;
       font-size: 11.5px;
       line-height: 1.85;
       max-height: 100px;
@@ -800,7 +800,7 @@
       border-radius: 32px;
       background:
         radial-gradient(circle at 10% 10%, rgba(228, 182, 96, .2), transparent 32%),
-        radial-gradient(circle at 92% 88%, rgba(233, 118, 76, .18), transparent 34%),
+        radial-gradient(circle at 92% 88%, rgba(184, 69, 31, .18), transparent 34%),
         linear-gradient(145deg, #173e32 0%, #0b2b23 100%);
       color: #f7f2e9;
       border: 1px solid rgba(255,255,255,.08);
@@ -826,6 +826,69 @@
       padding: 22px;
       box-shadow: 0 25px 60px -22px rgba(0,0,0,.4);
     }
+    /* Suggested prompt example image */
+    .suggest-dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+      padding: 13px 12px;
+      border: 1.5px dashed var(--line-strong);
+      border-radius: 12px;
+      background: #faf7f0;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .suggest-dropzone:hover,
+    .suggest-dropzone:focus-visible {
+      border-color: var(--brand);
+      background: #f3f9f5;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(15,107,83,.07);
+    }
+    .suggest-dropzone.is-dragover { border-color: var(--brand); background: #eaf5ef; }
+    .suggest-dropzone.is-busy { opacity: .6; pointer-events: none; }
+    .suggest-dropzone[hidden] { display: none; }
+    .suggest-dropzone strong { font-size: 11px; font-weight: 800; color: var(--ink); }
+    .suggest-dropzone span { font-size: 9.5px; color: var(--ink-faint); line-height: 1.7; }
+    .suggest-dropzone .drop-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+    .suggest-image-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+    }
+    .suggest-image-preview[hidden] { display: none; }
+    .suggest-image-preview img {
+      width: 74px;
+      height: 74px;
+      flex: 0 0 74px;
+      object-fit: cover;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .suggest-image-preview .preview-meta { min-width: 0; flex: 1; display: grid; gap: 2px; }
+    .suggest-image-preview .preview-meta strong { font-size: 10.5px; font-weight: 800; color: var(--ink); }
+    .suggest-image-preview .preview-meta span { font-size: 9px; color: var(--ink-faint); direction: ltr; text-align: right; }
+    .suggest-image-status { margin-top: 6px; font-size: 9.5px; font-weight: 700; line-height: 1.7; }
+    .suggest-image-status.is-error { color: #a94a28; }
+    .suggest-image-status.is-info { color: var(--ink-faint); }
+    .suggest-image-status.is-success { color: #1d6d54; }
     .field-label {
       display: block;
       font-size: 12px;
@@ -855,7 +918,7 @@
       border-color: var(--brand);
       box-shadow: 0 0 0 4px rgba(15, 107, 83, .09);
     }
-    .textarea-control::placeholder { color: #9ba69f; }
+    .textarea-control::placeholder { color: #55655e; }
     .textarea-shell { position: relative; }
     .dir-badge {
       display: inline-flex;
@@ -875,7 +938,7 @@
     .dir-badge[data-state="ltr"] {
       color: #9a4b2d;
       background: #fcece4;
-      border-color: rgba(233,118,76,.2);
+      border-color: rgba(184,69,31,.2);
     }
 
     .faq-item {
@@ -1166,7 +1229,10 @@
               <strong class="text-[19px] font-black text-ink">مُنطلق</strong>
               <span class="brand-prompt">(Prompt)</span>
             </span>
-            <span class="block text-[9.5px] text-[var(--ink-faint)] mt-1 font-medium">المكتبة العربية للمُنطلقات الذكية</span>
+            <span class="block w-fit mt-1 text-center">
+              <span class="block text-[10px] text-[var(--ink-faint)] font-medium">المكتبة العربية للمُنطلقات الذكية</span>
+              <span class="block text-[11px] text-[var(--ink-faint)] mt-0.5 font-bold">م. رائد زحالقة، جنين، فلسطين</span>
+            </span>
           </span>
         </a>
 
@@ -1216,10 +1282,13 @@
       <div class="mx-auto max-w-[1240px] px-4 sm:px-6">
         <div class="grid lg:grid-cols-[1.06fr_.94fr] items-center gap-12 lg:gap-14">
           <div class="reveal">
-            <span class="eyebrow">
-              <span class="pulse-dot"></span>
-              المكتبة العربية للمُنطلقات الذكية
-            </span>
+            <div class="w-fit">
+              <span class="eyebrow">
+                <span class="pulse-dot"></span>
+                المكتبة العربية للمُنطلقات الذكية
+              </span>
+              <p class="mt-2 text-[12.5px] font-bold text-[var(--ink-faint)] text-center">م. رائد زحالقة، جنين، فلسطين</p>
+            </div>
             <h1 class="hero-title mt-5">
               كل فكرة عظيمة<br>
               تبدأ بـ<span class="marker">مُنطلق</span>
@@ -1504,7 +1573,7 @@
           </article>
           <article class="step-card reveal reveal-delay-2">
             <span class="step-number">03</span>
-            <span class="step-icon !bg-[#fbf0d8] !text-[#9b6a1d]">
+            <span class="step-icon !bg-[#fbf0d8] !text-[#7c5310]">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
             </span>
             <h3 class="text-[16px] font-black">انسخ والصق في نموذجك</h3>
@@ -1534,7 +1603,7 @@
                   </span>
                   <div>
                     <strong class="text-[12px] block">حفظ محلي فوري</strong>
-                    <span class="text-[10.5px] text-[#a9c0b7]">يُحفظ الاقتراح في متصفحك حتى دون اتصال.</span>
+                    <span class="text-[10.5px] text-[#cfe0d9]">يُحفظ الاقتراح في متصفحك حتى دون اتصال.</span>
                   </div>
                 </div>
                 <div class="flex items-start gap-3">
@@ -1543,7 +1612,7 @@
                   </span>
                   <div>
                     <strong class="text-[12px] block">مراجعة بشرية</strong>
-                    <span class="text-[10.5px] text-[#a9c0b7]">تظهر الاقتراحات في تبويب «الاقتراحات» بلوحة التحكم.</span>
+                    <span class="text-[10.5px] text-[#cfe0d9]">تظهر الاقتراحات في تبويب «الاقتراحات» بلوحة التحكم.</span>
                   </div>
                 </div>
                 <div class="flex items-start gap-3">
@@ -1552,14 +1621,14 @@
                   </span>
                   <div>
                     <strong class="text-[12px] block">اتجاه تلقائي أثناء الكتابة</strong>
-                    <span class="text-[10.5px] text-[#a9c0b7]">اكتب بالعربية أو الإنجليزية وسيتكيف الحقل فورًا.</span>
+                    <span class="text-[10.5px] text-[#cfe0d9]">اكتب بالعربية أو الإنجليزية وسيتكيف الحقل فورًا.</span>
                   </div>
                 </div>
               </div>
 
               <div class="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p class="text-[11px] leading-[1.9] text-[#b9cec5]">«المُنطلق الجيد لا يحل مكانك، بل يجعلك تبدأ من نقطة أفضل.»</p>
-                <p class="text-[9.5px] text-[#88a79b] mt-2">— فريق مُنطلق (Prompt)</p>
+                <p class="text-[9.5px] text-[#a9c6ba] mt-2">— فريق مُنطلق (Prompt)</p>
               </div>
             </div>
 
@@ -1632,6 +1701,40 @@
                     <span class="dir-badge" data-dir-badge data-state="rtl">RTL · تلقائي</span>
                   </div>
                   <textarea class="textarea-control" id="suggestExample" name="example_result" rows="3" dir="auto" data-auto-dir placeholder="ألصق مثالًا قصيرًا على نتيجة تطبيق المُنطلق." maxlength="2000"></textarea>
+                </div>
+
+                <div class="rounded-xl border border-[var(--line)] bg-[#faf7f0] p-3">
+                  <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <label class="field-label !mb-0" for="suggestImage">صورة مثال النتيجة <span class="text-[var(--ink-faint)] font-normal">(اختياري)</span></label>
+                    <span class="text-[9px] text-[var(--ink-faint)]">PNG · JPG · WebP · GIF — تُضغط تلقائيًا</span>
+                  </div>
+                  <input class="hidden" id="suggestImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+                  <div class="suggest-dropzone" id="suggestImageDropzone" role="button" tabindex="0" aria-controls="suggestImage" aria-label="رفع صورة مثال النتيجة">
+                    <span class="drop-icon" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-4.5-4.5L7 20"/></svg>
+                    </span>
+                    <strong>اسحب الصورة هنا أو اضغط للاختيار</strong>
+                    <span>أو الصق صورة من الحافظة بـ Ctrl + V · حد أقصى 8 ميجابايت</span>
+                  </div>
+                  <div class="suggest-image-preview" id="suggestImagePreview" hidden>
+                    <img id="suggestImagePreviewImg" alt="معاينة صورة مثال النتيجة">
+                    <div class="preview-meta">
+                      <strong>صورة المثال جاهزة</strong>
+                      <span id="suggestImageMeta"></span>
+                    </div>
+                    <button class="btn btn-secondary !py-1.5 !px-2.5 !text-[9.5px]" type="button" id="suggestImageRemove">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+                      إزالة
+                    </button>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 mt-2">
+                    <button class="btn btn-secondary !py-1.5 !px-2.5 !text-[9.5px]" type="button" id="suggestImagePasteBtn">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+                      لصق من الحافظة
+                    </button>
+                    <span class="text-[9px] text-[var(--ink-faint)]">انسخ صورة ثم الصقها مباشرة داخل النموذج.</span>
+                  </div>
+                  <p class="suggest-image-status" id="suggestImageStatus" role="status" aria-live="polite" hidden></p>
                 </div>
 
                 <div class="rounded-xl bg-[#f7f3ea] border border-[#eee5d7] p-3 text-[10px] leading-[1.8] text-[var(--ink-faint)] flex items-start gap-2">
@@ -1710,7 +1813,10 @@
             </span>
             <span class="leading-none">
               <span class="flex items-baseline gap-1"><strong class="text-[19px] font-black">مُنطلق</strong><span class="brand-prompt">(Prompt)</span></span>
-              <span class="block text-[9.5px] text-[var(--ink-faint)] mt-1">المكتبة العربية للمُنطلقات الذكية</span>
+              <span class="block w-fit mt-1 text-center">
+                <span class="block text-[10px] text-[var(--ink-faint)]">المكتبة العربية للمُنطلقات الذكية</span>
+                <span class="block text-[11px] text-[var(--ink-faint)] mt-0.5 font-bold">م. رائد زحالقة، جنين، فلسطين</span>
+              </span>
             </span>
           </a>
           <p class="text-[11.5px] leading-[1.9] text-[var(--ink-soft)] max-w-[320px] mt-4">مكتبة مستقلة تجمع أفضل مُنطلقات الذكاء الاصطناعي بالعربية، وتشرحها بلغة واضحة، لتصنع نتائج أفضل بوقت أقل.</p>
@@ -1808,7 +1914,7 @@
               مثال حي على النتيجة
             </span>
             <div class="flex items-center gap-2">
-              <span class="text-[9.5px] font-bold text-[#9b6a1d] bg-[#fbf0d8] rounded px-2 py-0.5" id="detailExampleType"></span>
+              <span class="text-[9.5px] font-bold text-[#7c5310] bg-[#fbf0d8] rounded px-2 py-0.5" id="detailExampleType"></span>
               <span class="dir-chip" data-dir="rtl" id="detailExampleDir">RTL</span>
             </div>
           </div>

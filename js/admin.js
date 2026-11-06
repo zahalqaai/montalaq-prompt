@@ -557,6 +557,7 @@
       prompt_text: promptText,
       explanation: String(suggestion.explanation || ''),
       example_result: String(suggestion.example_result || ''),
+      example_image: Core.isExampleImage(suggestion.example_image) ? suggestion.example_image.trim() : '',
       status: String(suggestion.status || 'pending'),
       created_at: String(suggestion.created_at || new Date().toISOString())
     };
@@ -904,6 +905,16 @@
             </div>
             <div class="prompt-content suggestion-quote suggestion-prompt" dir="auto" style="unicode-bidi:plaintext;text-align:start;">${escapeHTML(suggestion.prompt_text)}</div>
           </div>
+
+          ${suggestion.example_image ? `
+            <div class="mt-2.5">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[9px] font-bold text-[var(--ink-faint)]">صورة مثال النتيجة</span>
+                <span class="dir-badge" data-state="rtl">صورة</span>
+              </div>
+              <img class="suggestion-image" src="${escapeHTML(suggestion.example_image)}" alt="صورة مثال النتيجة المقترحة" loading="lazy">
+            </div>
+          ` : ''}
 
           ${suggestion.explanation || suggestion.example_result ? `
             <details class="mt-2.5 rounded-lg border border-[var(--line)] bg-[#fffdf8] overflow-hidden">
@@ -1330,7 +1341,11 @@
       elements.fieldPromptText.value = suggestion.prompt_text || '';
       elements.fieldExplanation.value = suggestion.explanation || '';
       elements.fieldExampleResult.value = suggestion.example_result || '';
-      elements.fieldExampleType.value = 'نص';
+      elements.fieldExampleType.value = suggestion.example_image ? 'صورة' : 'نص';
+      if (Core.isExampleImage(suggestion.example_image)) {
+        setExampleImage(suggestion.example_image, { bytes: dataUrlByteSize(suggestion.example_image) });
+        setExampleImageStatus('صورة مرفقة مع الاقتراح. يمكنك استبدالها أو إزالتها.', 'info');
+      }
       elements.fieldTags.value = ['مقترح', category.short].join('، ');
       elements.editorSaveBtn.innerHTML = `${icon('check', 14, 2)} اعتماد ونشر`;
     } else {

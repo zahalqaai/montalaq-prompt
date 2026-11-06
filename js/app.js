@@ -503,6 +503,17 @@
       .filter(Boolean);
   }
 
+  const EXAMPLE_IMAGE_PATTERN = /^data:image\/(?:png|jpe?g|webp|gif|avif);base64,[A-Za-z0-9+/=\s]+$/i;
+
+  function isExampleImage(value, maxLength = 3000000) {
+    return typeof value === 'string' && value.length <= maxLength && EXAMPLE_IMAGE_PATTERN.test(value.trim());
+  }
+
+  function normalizeExampleImage(value) {
+    if (!isExampleImage(value)) return '';
+    return value.trim();
+  }
+
   function normalizePrompt(prompt, index = 0) {
     const source = prompt && typeof prompt === 'object' ? prompt : {};
     const category = CATEGORY_MAP[source.category] ? source.category : 'writing';
@@ -515,6 +526,7 @@
       prompt_text: String(source.prompt_text || ''),
       explanation: String(source.explanation || ''),
       example_result: String(source.example_result || ''),
+      example_image: normalizeExampleImage(source.example_image),
       example_type: String(source.example_type || 'نص'),
       model: String(source.model || 'ChatGPT'),
       difficulty,
@@ -678,6 +690,8 @@
     applyAutoDirection,
     setupAutoDirInputs,
     syncTextareaDirection,
+    isExampleImage,
+    normalizeExampleImage,
     normalizePrompt,
     normalizeTags,
     loadPrompts,
@@ -1403,11 +1417,28 @@
       }
 
       const exampleElement = document.getElementById('detailExample');
+      const exampleDirChip = document.getElementById('detailExampleDir');
       if (exampleElement) {
-        exampleElement.textContent = prompt.example_result || 'لم يُضف مثال على النتيجة بعد.';
-        exampleElement.classList.toggle('code-content', prompt.example_type === 'كود');
-        const dir = applyAutoDirection(exampleElement, prompt.example_result || '');
-        setDirChip(document.getElementById('detailExampleDir'), dir);
+        const hasImage = isExampleImage(prompt.example_image);
+        exampleElement.classList.toggle('is-image', hasImage);
+        if (hasImage) {
+          exampleElement.classList.remove('code-content');
+          exampleElement.removeAttribute('dir');
+          exampleElement.style.textAlign = '';
+          exampleElement.innerHTML = `
+            <button class="example-image-btn" type="button" data-image-view aria-label="عرض صورة مثال النتيجة بالحجم الكامل">
+              <img class="example-image" src="${escapeHTML(prompt.example_image)}" alt="مثال النتيجة لمُنطلق ${escapeHTML(prompt.title)}" loading="lazy">
+              <span class="example-image-hint">اضغط لعرض الصورة بالحجم الكامل</span>
+            </button>
+          `;
+          if (exampleDirChip) exampleDirChip.hidden = true;
+        } else {
+          exampleElement.textContent = prompt.example_result || 'لم يُضف مثال على النتيجة بعد.';
+          exampleElement.classList.toggle('code-content', prompt.example_type === 'كود');
+          const dir = applyAutoDirection(exampleElement, prompt.example_result || '');
+          setDirChip(exampleDirChip, dir);
+          if (exampleDirChip) exampleDirChip.hidden = false;
+        }
       }
 
       const tagsElement = document.getElementById('detailTags');
@@ -1462,6 +1493,8 @@
 
     function closePromptDialog() {
       if (!elements.promptDialog) return;
+      const lightbox = document.getElementById('imageLightbox');
+      if (lightbox?.open && typeof lightbox.close === 'function') lightbox.close();
       if (typeof elements.promptDialog.close === 'function') {
         if (elements.promptDialog.open) elements.promptDialog.close();
       } else {
@@ -1469,6 +1502,22 @@
       }
       document.body.style.overflow = '';
       app.currentId = null;
+    }
+
+    function openImageLightbox(trigger) {
+      const source = trigger?.querySelector('img');
+      const lightbox = document.getElementById('imageLightbox');
+      const lightboxImage = document.getElementById('imageLightboxImg');
+      if (!source || !lightbox || !lightboxImage) return;
+      lightboxImage.src = source.getAttribute('src');
+      lightboxImage.alt = source.getAttribute('alt') || '';
+      if (typeof lightbox.showModal === 'function') {
+        if (!lightbox.open) lightbox.showModal();
+      } else {
+        lightbox.setAttribute('open', '');
+      }
+      document.body.style.overflow = 'hidden';
+      lightbox.querySelector('[data-close-lightbox]')?.focus();
     }
 
     function bindDialogEvents() {
@@ -1480,6 +1529,34 @@
 
       elements.promptDialog.addEventListener('click', (event) => {
         if (event.target === elements.promptDialog) closePromptDialog();
+      });
+
+      elements.promptDialog.addEventListener('click', (event) => {
+        const trigger = event.target.closest('[data-image-view]');
+        if (trigger) openImageLightbox(trigger);
+      });
+
+      const lightbox = document.getElementById('imageLightbox');
+      const lightboxImage = document.getElementById('imageLightboxImg');
+      const closeLightbox = () => {
+        if (!lightbox) return;
+        if (typeof lightbox.close === 'function' && lightbox.open) lightbox.close();
+        else lightbox.removeAttribute('open');
+        if (lightboxImage) {
+          lightboxImage.removeAttribute('src');
+          lightboxImage.alt = '';
+        }
+        document.body.style.overflow = elements.promptDialog?.open ? 'hidden' : '';
+      };
+
+      lightbox?.querySelectorAll('[data-close-lightbox]').forEach((button) => {
+        button.addEventListener('click', closeLightbox);
+      });
+      lightbox?.addEventListener('click', (event) => {
+        if (event.target === lightbox) closeLightbox();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && lightbox?.open) closeLightbox();
       });
 
       elements.promptDialog.addEventListener('close', () => {

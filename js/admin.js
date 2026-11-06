@@ -39,6 +39,11 @@
   const PASSWORD_MIN_LENGTH = 5;
   const PASSWORD_MAX_LENGTH = 64;
 
+  const MAX_EXAMPLE_IMAGE_BYTES = 8 * 1024 * 1024;
+  const EXAMPLE_IMAGE_MAX_DIMENSION = 1400;
+  const EXAMPLE_IMAGE_MAX_DATA_LENGTH = 900000;
+  const EXAMPLE_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+
   const state = {
     prompts: [],
     suggestions: [],
@@ -48,7 +53,9 @@
     confirmAction: null,
     promptQuery: '',
     categoryFilter: 'all',
-    difficultyFilter: 'all'
+    difficultyFilter: 'all',
+    exampleImage: '',
+    exampleImageBusy: false
   };
 
   const elements = {};
@@ -475,6 +482,14 @@
     elements.fieldExplanation = document.getElementById('fieldExplanation');
     elements.fieldExampleResult = document.getElementById('fieldExampleResult');
     elements.fieldExampleType = document.getElementById('fieldExampleType');
+    elements.fieldExampleImage = document.getElementById('fieldExampleImage');
+    elements.exampleImageDropzone = document.getElementById('exampleImageDropzone');
+    elements.exampleImagePreview = document.getElementById('exampleImagePreview');
+    elements.exampleImagePreviewImg = document.getElementById('exampleImagePreviewImg');
+    elements.exampleImageMeta = document.getElementById('exampleImageMeta');
+    elements.exampleImageRemove = document.getElementById('exampleImageRemove');
+    elements.exampleImagePasteBtn = document.getElementById('exampleImagePasteBtn');
+    elements.exampleImageStatus = document.getElementById('exampleImageStatus');
     elements.fieldTags = document.getElementById('fieldTags');
 
     elements.confirmDialog = document.getElementById('confirmDialog');
@@ -984,7 +999,285 @@
       document.body.style.overflow = '';
       state.editingId = null;
       state.pendingSuggestionId = null;
+      clearExampleImage({ keepStatus: true });
+      setExampleImageStatus('');
     });
+
+    elements.exampleImageDropzone?.addEventListener('click', () => {
+      if (state.exampleImageBusy) return;
+      elements.fieldExampleImage?.click();
+    });
+
+    elements.exampleImageDropzone?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      if (state.exampleImageBusy) return;
+      elements.fieldExampleImage?.click();
+    });
+
+    elements.fieldExampleImage?.addEventListener('change', (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (file) processExampleImage(file);
+      event.target.value = '';
+    });
+
+    elements.exampleImageRemove?.addEventListener('click', () => clearExampleImage());
+    elements.exampleImagePasteBtn?.addEventListener('click', pasteExampleImageFromClipboard);
+    elements.editorDialog?.addEventListener('paste', handleEditorPaste);
+
+    ['dragenter', 'dragover'].forEach((type) => {
+      elements.exampleImageDropzone?.addEventListener(type, (event) => {
+        event.preventDefault();
+        if (state.exampleImageBusy) return;
+        elements.exampleImageDropzone.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'dragend'].forEach((type) => {
+      elements.exampleImageDropzone?.addEventListener(type, () => {
+        elements.exampleImageDropzone?.classList.remove('is-dragover');
+      });
+    });
+
+    elements.exampleImageDropzone?.addEventListener('drop', (event) => {
+      event.preventDefault();
+      elements.exampleImageDropzone.classList.remove('is-dragover');
+      if (state.exampleImageBusy) return;
+      const file = event.dataTransfer?.files && event.dataTransfer.files[0];
+      if (file) processExampleImage(file);
+    });
+  }
+
+  function setExampleImageStatus(message, type = 'info') {
+    if (!elements.exampleImageStatus) return;
+    if (!message) {
+      elements.exampleImageStatus.hidden = true;
+      elements.exampleImageStatus.textContent = '';
+      return;
+    }
+    elements.exampleImageStatus.className = `example-image-status is-${type}`;
+    elements.exampleImageStatus.textContent = message;
+    elements.exampleImageStatus.hidden = false;
+  }
+
+  function setExampleImageBusy(busy) {
+    state.exampleImageBusy = busy;
+    elements.exampleImageDropzone?.classList.toggle('is-busy', busy);
+    if (elements.editorSaveBtn) elements.editorSaveBtn.disabled = busy;
+  }
+
+  function formatImageSize(bytes) {
+    if (bytes < 1024) return `${formatNumber(bytes)} بايت`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} كيلوبايت`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} ميجابايت`;
+  }
+
+  function dataUrlByteSize(dataUrl) {
+    const base64 = String(dataUrl).split(',')[1] || '';
+    return Math.round((base64.length * 3) / 4);
+  }
+
+  function setExampleImage(dataUrl, meta = {}) {
+    state.exampleImage = dataUrl || '';
+    const hasImage = Boolean(state.exampleImage);
+
+    if (elements.exampleImagePreview) elements.exampleImagePreview.hidden = !hasImage;
+    if (elements.exampleImageDropzone) elements.exampleImageDropzone.hidden = hasImage;
+    if (elements.exampleImagePreviewImg) {
+      if (hasImage) elements.exampleImagePreviewImg.src = state.exampleImage;
+      else elements.exampleImagePreviewImg.removeAttribute('src');
+    }
+    if (elements.exampleImageMeta) {
+      const size = meta.bytes || dataUrlByteSize(state.exampleImage);
+      const dimensions = meta.width && meta.height ? `${meta.width}×${meta.height} · ` : '';
+      elements.exampleImageMeta.textContent = hasImage ? `${dimensions}${formatImageSize(size)}` : '';
+    }
+
+    if (hasImage && (!meta.width || !meta.height)) {
+      const currentSource = state.exampleImage;
+      loadImageElement(currentSource).then((image) => {
+        if (state.exampleImage !== currentSource || !elements.exampleImageMeta) return;
+        const size = meta.bytes || dataUrlByteSize(currentSource);
+        elements.exampleImageMeta.textContent = `${image.naturalWidth}×${image.naturalHeight} · ${formatImageSize(size)}`;
+      }).catch(() => {});
+    }
+
+    if (hasImage) {
+      const currentType = elements.fieldExampleType?.value.trim() || '';
+      if (!currentType || currentType === 'نص') {
+        elements.fieldExampleType.value = 'صورة';
+        setExampleImageStatus('تم رفع الصورة وضبط نوع المثال على «صورة».', 'success');
+      } else {
+        setExampleImageStatus('تم رفع الصورة بنجاح.', 'success');
+      }
+    }
+  }
+
+  function clearExampleImage(options = {}) {
+    state.exampleImage = '';
+    if (elements.exampleImagePreview) elements.exampleImagePreview.hidden = true;
+    if (elements.exampleImageDropzone) {
+      elements.exampleImageDropzone.hidden = false;
+      elements.exampleImageDropzone.classList.remove('is-dragover', 'is-busy');
+    }
+    if (elements.exampleImagePreviewImg) elements.exampleImagePreviewImg.removeAttribute('src');
+    if (elements.exampleImageMeta) elements.exampleImageMeta.textContent = '';
+    if (elements.fieldExampleImage) elements.fieldExampleImage.value = '';
+    if (elements.fieldExampleType?.value.trim() === 'صورة') elements.fieldExampleType.value = 'نص';
+    if (!options.keepStatus) setExampleImageStatus('');
+  }
+
+  function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('read-failed'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadImageElement(source) {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error('image-load-failed'));
+      image.src = source;
+    });
+  }
+
+  async function processExampleImage(file) {
+    if (!file) return;
+
+    if (!EXAMPLE_IMAGE_TYPES.includes(file.type)) {
+      setExampleImageStatus('صيغة غير مدعومة. استخدم PNG أو JPG أو WebP أو GIF.', 'error');
+      return;
+    }
+    if (file.size > MAX_EXAMPLE_IMAGE_BYTES) {
+      setExampleImageStatus('حجم الصورة كبير جدًا. الحد الأقصى 8 ميجابايت.', 'error');
+      return;
+    }
+
+    setExampleImageBusy(true);
+    setExampleImageStatus('جارٍ ضغط الصورة وتحضيرها…', 'info');
+
+    try {
+      const original = await readFileAsDataURL(file);
+      const image = await loadImageElement(original);
+      const compressed = compressExampleImage(image);
+
+      if (!compressed || !Core.isExampleImage(compressed.dataUrl)) {
+        throw new Error('compression-failed');
+      }
+
+      setExampleImage(compressed.dataUrl, {
+        width: compressed.width,
+        height: compressed.height,
+        bytes: dataUrlByteSize(compressed.dataUrl)
+      });
+      setTimeout(() => {
+        elements.exampleImagePreview?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 60);
+    } catch (error) {
+      setExampleImageStatus('تعذّرت معالجة الصورة. جرّب صورة أخرى بصيغة PNG أو JPG.', 'error');
+    } finally {
+      setExampleImageBusy(false);
+    }
+  }
+
+  function handleEditorPaste(event) {
+    if (!elements.editorDialog?.open || state.exampleImageBusy) return;
+    const clipboard = event.clipboardData;
+    if (!clipboard) return;
+
+    const items = Array.from(clipboard.items || []);
+    const imageItem = items.find((item) => item.kind === 'file' && String(item.type).startsWith('image/'));
+    if (!imageItem) return;
+
+    const target = event.target;
+    const isTextField = target instanceof HTMLElement && (
+      target.tagName === 'TEXTAREA'
+      || (target.tagName === 'INPUT' && !['file', 'checkbox', 'radio', 'button', 'submit', 'range', 'color'].includes(target.type))
+    );
+    const hasPlainText = Array.from(clipboard.types || []).includes('text/plain');
+
+    /* Keep normal text pasting intact when the clipboard carries both text and an image. */
+    if (isTextField && hasPlainText) return;
+
+    const file = imageItem.getAsFile();
+    if (!file) return;
+
+    event.preventDefault();
+    setExampleImageStatus('تم لصق صورة من الحافظة، جارٍ معالجتها…', 'info');
+    processExampleImage(file);
+  }
+
+  async function pasteExampleImageFromClipboard() {
+    if (state.exampleImageBusy) return;
+
+    if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+      setExampleImageStatus('هذا المتصفح لا يدعم اللصق المباشر. انسخ الصورة ثم اضغط Ctrl + V داخل المحرر.', 'info');
+      return;
+    }
+
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const type = item.types.find((candidate) => EXAMPLE_IMAGE_TYPES.includes(candidate));
+        if (!type) continue;
+        const blob = await item.getType(type);
+        const file = new File([blob], `clipboard.${type.split('/')[1]}`, { type });
+        processExampleImage(file);
+        return;
+      }
+      setExampleImageStatus('لا توجد صورة في الحافظة. انسخ صورة أولًا ثم أعد المحاولة.', 'error');
+    } catch (error) {
+      setExampleImageStatus('لم يُسمح بالوصول إلى الحافظة. اضغط Ctrl + V داخل المحرر للصق الصورة.', 'info');
+    }
+  }
+
+  function compressExampleImage(image) {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return null;
+
+    const naturalWidth = image.naturalWidth || image.width;
+    const naturalHeight = image.naturalHeight || image.height;
+    if (!naturalWidth || !naturalHeight) return null;
+
+    let width = naturalWidth;
+    let height = naturalHeight;
+    const scale = Math.min(1, EXAMPLE_IMAGE_MAX_DIMENSION / Math.max(width, height));
+    width = Math.max(1, Math.round(width * scale));
+    height = Math.max(1, Math.round(height * scale));
+
+    const qualities = [0.86, 0.74, 0.62, 0.5];
+    let bestUrl = '';
+
+    for (let index = 0; index < qualities.length; index += 1) {
+      canvas.width = width;
+      canvas.height = height;
+      context.clearRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+
+      let url = canvas.toDataURL('image/webp', qualities[index]);
+      if (!url.startsWith('data:image/webp')) {
+        context.globalCompositeOperation = 'destination-over';
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, width, height);
+        context.globalCompositeOperation = 'source-over';
+        url = canvas.toDataURL('image/jpeg', qualities[index]);
+      }
+
+      bestUrl = url;
+      if (url.length <= EXAMPLE_IMAGE_MAX_DATA_LENGTH) break;
+      if (Math.max(width, height) <= 720) break;
+      if (index === qualities.length - 1) break;
+
+      width = Math.max(1, Math.round(width * 0.85));
+      height = Math.max(1, Math.round(height * 0.85));
+    }
+
+    return { dataUrl: bestUrl, width, height };
   }
 
   function openEditor(promptId = null, prefill = null) {
@@ -993,6 +1286,8 @@
     elements.promptForm.reset();
     state.editingId = null;
     state.pendingSuggestionId = null;
+    clearExampleImage({ keepStatus: true });
+    setExampleImageStatus('');
 
     if (promptId) {
       const prompt = state.prompts.find((item) => String(item.id) === String(promptId));
@@ -1013,6 +1308,10 @@
       elements.fieldExplanation.value = prompt.explanation;
       elements.fieldExampleResult.value = prompt.example_result;
       elements.fieldExampleType.value = prompt.example_type;
+      if (Core.isExampleImage(prompt.example_image)) {
+        setExampleImage(prompt.example_image, { bytes: dataUrlByteSize(prompt.example_image) });
+        setExampleImageStatus('صورة المثال الحالية. يمكنك استبدالها أو إزالتها.', 'info');
+      }
       elements.fieldTags.value = prompt.tags.join('، ');
       elements.editorSaveBtn.innerHTML = `${icon('check', 14, 2)} حفظ التعديلات`;
     } else if (prefill) {
@@ -1072,6 +1371,11 @@
   }
 
   function saveEditor() {
+    if (state.exampleImageBusy) {
+      toast('انتظر انتهاء معالجة الصورة ثم احفظ.', 'info');
+      return;
+    }
+
     const title = elements.fieldTitle.value.trim();
     const category = elements.fieldCategory.value;
     const model = elements.fieldModel.value.trim() || 'ChatGPT';
@@ -1081,18 +1385,22 @@
     const promptText = elements.fieldPromptText.value.trim();
     const explanation = elements.fieldExplanation.value.trim();
     const exampleResult = elements.fieldExampleResult.value.trim();
-    const exampleType = elements.fieldExampleType.value.trim() || 'نص';
+    const exampleImage = state.exampleImage;
+    let exampleType = elements.fieldExampleType.value.trim() || 'نص';
     const tags = elements.fieldTags.value
       .split(/[,،]/)
       .map((tag) => tag.trim())
       .filter(Boolean);
 
-    if (!title || !promptText || !explanation || !exampleResult) {
-      toast('أكمل العنوان ونص المُنطلق والشرح ومثال النتيجة.', 'error');
+    if (exampleImage && (!exampleType || exampleType === 'نص')) exampleType = 'صورة';
+    if (!exampleImage && exampleType === 'صورة') exampleType = 'نص';
+
+    if (!title || !promptText || !explanation || (!exampleResult && !exampleImage)) {
+      toast('أكمل العنوان ونص المُنطلق والشرح، وأضف مثال نتيجة نصيًا أو صورة.', 'error');
       if (!title) elements.fieldTitle.focus();
       else if (!promptText) elements.fieldPromptText.focus();
       else if (!explanation) elements.fieldExplanation.focus();
-      else elements.fieldExampleResult.focus();
+      else if (!exampleResult) elements.fieldExampleResult.focus();
       return;
     }
 
@@ -1107,6 +1415,7 @@
       prompt_text: promptText,
       explanation,
       example_result: exampleResult,
+      example_image: exampleImage,
       example_type: exampleType,
       model,
       difficulty: DIFFICULTIES.includes(difficulty) ? difficulty : 'متوسط',
@@ -1115,6 +1424,7 @@
     };
 
     const normalized = normalizePrompt(basePrompt, state.prompts.length);
+    const promptsSnapshot = state.prompts.slice();
 
     if (state.editingId) {
       const index = state.prompts.findIndex((prompt) => String(prompt.id) === String(state.editingId));
@@ -1128,7 +1438,8 @@
     }
 
     if (!savePrompts(state.prompts)) {
-      toast('تعذّر حفظ البيانات. تحقّق من مساحة التخزين.', 'error');
+      state.prompts = promptsSnapshot;
+      toast('تعذّر حفظ البيانات. مساحة التخزين قد تكون ممتلئة؛ صغّر الصورة أو أزل صورًا أخرى ثم أعد المحاولة.', 'error');
       return;
     }
 

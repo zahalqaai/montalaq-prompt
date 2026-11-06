@@ -563,6 +563,72 @@
     .storage-meter { height: 6px; border-radius: 6px; background: #eee7db; overflow: hidden; }
     .storage-meter > span { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--brand), #3eb18a); }
 
+    /* Example result image upload */
+    .example-dropzone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 100%;
+      padding: 16px 14px;
+      border: 1.5px dashed #d9cdb9;
+      border-radius: 12px;
+      background: #faf7f0;
+      color: var(--ink-soft);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    .example-dropzone:hover,
+    .example-dropzone:focus-visible {
+      border-color: var(--brand);
+      background: #f3f9f5;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(15,107,83,.07);
+    }
+    .example-dropzone.is-dragover { border-color: var(--brand); background: #eaf5ef; }
+    .example-dropzone.is-busy { opacity: .6; pointer-events: none; }
+    .example-dropzone[hidden] { display: none; }
+    .example-dropzone strong { font-size: 10.5px; font-weight: 800; color: var(--ink); }
+    .example-dropzone span { font-size: 8.5px; color: var(--ink-faint); }
+    .example-dropzone .drop-icon {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 1px;
+      border-radius: 9px;
+      background: var(--brand-soft);
+      color: var(--brand);
+    }
+    .example-image-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fffdf8;
+    }
+    .example-image-preview[hidden] { display: none; }
+    .example-image-preview img {
+      width: 78px;
+      height: 78px;
+      flex: 0 0 78px;
+      object-fit: cover;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+    .example-image-preview .preview-meta { min-width: 0; flex: 1; display: grid; gap: 2px; }
+    .example-image-preview .preview-meta strong { font-size: 10px; font-weight: 800; color: var(--ink); }
+    .example-image-preview .preview-meta span { font-size: 8.5px; color: var(--ink-faint); direction: ltr; text-align: right; }
+    .example-image-status { margin-top: 6px; font-size: 9px; font-weight: 700; line-height: 1.7; }
+    .example-image-status.is-error { color: #a94a28; }
+    .example-image-status.is-info { color: var(--ink-faint); }
+    .example-image-status.is-success { color: #1d6d54; }
+
     /* Admin authentication */
     body.auth-locked { overflow: hidden; }
     body.auth-locked > .admin-sidebar,
@@ -1379,10 +1445,44 @@
 
         <div class="mb-3" data-dir-wrap>
           <div class="flex items-center justify-between gap-3">
-            <label class="field-label !mb-1.5" for="fieldExampleResult">مثال النتيجة <span class="req">*</span></label>
+            <label class="field-label !mb-1.5" for="fieldExampleResult">مثال النتيجة <span class="text-[var(--ink-faint)] font-normal">(نص أو صورة)</span></label>
             <span class="dir-badge" data-dir-badge data-state="rtl">RTL · تلقائي</span>
           </div>
-          <textarea class="textarea-control" id="fieldExampleResult" dir="auto" data-auto-dir rows="5" maxlength="5000" placeholder="ألصق مثالًا حقيقيًا أو واقعيًا على النتيجة." required></textarea>
+          <textarea class="textarea-control" id="fieldExampleResult" dir="auto" data-auto-dir rows="5" maxlength="5000" placeholder="اكتب مثالًا نصيًا، أو ارفع صورة أدناه، أو استخدم الاثنين معًا."></textarea>
+        </div>
+
+        <div class="mb-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+            <label class="field-label !mb-0" for="fieldExampleImage">صورة مثال النتيجة</label>
+            <span class="text-[8.5px] text-[var(--ink-faint)]">PNG · JPG · WebP · GIF — تُضغط تلقائيًا</span>
+          </div>
+          <input class="hidden" id="fieldExampleImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+          <div class="example-dropzone" id="exampleImageDropzone" role="button" tabindex="0" aria-controls="fieldExampleImage" aria-label="رفع صورة مثال النتيجة">
+            <span class="drop-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="9" cy="9" r="1.8"/><path d="m21 15-4.5-4.5L7 20"/></svg>
+            </span>
+            <strong>اسحب الصورة هنا أو اضغط للاختيار</strong>
+            <span>أو الصق صورة من الحافظة بـ Ctrl + V · حد أقصى 8 ميجابايت</span>
+          </div>
+          <div class="example-image-preview" id="exampleImagePreview" hidden>
+            <img id="exampleImagePreviewImg" alt="معاينة صورة مثال النتيجة">
+            <div class="preview-meta">
+              <strong>صورة المثال جاهزة</strong>
+              <span id="exampleImageMeta"></span>
+            </div>
+            <button class="btn btn-secondary !py-1.5 !px-2.5 !text-[9.5px]" type="button" id="exampleImageRemove">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+              إزالة
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 mt-2">
+            <button class="btn btn-secondary !py-1.5 !px-2.5 !text-[9.5px]" type="button" id="exampleImagePasteBtn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>
+              لصق من الحافظة
+            </button>
+            <span class="text-[8.5px] text-[var(--ink-faint)]">انسخ صورة ثم الصقها مباشرة داخل المحرر.</span>
+          </div>
+          <p class="example-image-status" id="exampleImageStatus" role="status" aria-live="polite" hidden></p>
         </div>
 
         <div class="grid sm:grid-cols-2 gap-3">

@@ -964,6 +964,89 @@
     }
     .detail-prompt { background: #f3f7f3; border-color: #dbe7df; }
     .detail-example { background: #fbf6ec; border-color: #ece1cd; }
+    .detail-example.is-image { padding: 8px; }
+    .example-image-btn {
+      position: relative;
+      display: block;
+      width: 100%;
+      padding: 0;
+      border: 0;
+      border-radius: 10px;
+      overflow: hidden;
+      background: transparent;
+      cursor: zoom-in;
+    }
+    .example-image-btn:focus-visible { outline: 3px solid rgba(15,107,83,.35); outline-offset: 3px; }
+    .example-image {
+      display: block;
+      margin: 0 auto;
+      width: auto;
+      height: auto;
+      max-width: 100%;
+      max-height: 460px;
+      object-fit: contain;
+      border-radius: 10px;
+      background: #fff;
+    }
+    .example-image-hint {
+      position: absolute;
+      bottom: 9px;
+      left: 9px;
+      padding: 5px 9px;
+      border-radius: 7px;
+      background: rgba(12,35,28,.78);
+      color: #fffdf8;
+      font-size: 9.5px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity .2s;
+      pointer-events: none;
+    }
+    .example-image-btn:hover .example-image-hint,
+    .example-image-btn:focus-visible .example-image-hint { opacity: 1; }
+
+    .image-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      display: grid;
+      place-items: center;
+      width: 100vw;
+      height: 100vh;
+      max-width: 100vw;
+      max-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      border: 0;
+      background: rgba(6,22,17,.88);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+    .image-lightbox:not([open]) { display: none; }
+    .image-lightbox img {
+      width: auto;
+      height: auto;
+      max-width: min(1100px, 94vw);
+      max-height: 88vh;
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 40px 90px -30px rgba(0,0,0,.8);
+    }
+    .image-lightbox-close {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 11px;
+      background: rgba(255,255,255,.12);
+      color: #fffdf8;
+      transition: background .2s;
+    }
+    .image-lightbox-close:hover { background: rgba(255,255,255,.22); }
     .detail-tag { background: var(--brand-soft); color: var(--brand-dark); border-radius: 7px; padding: 4px 9px; font-size: 10px; font-weight: 700; }
 
     .toast-container { position: fixed; bottom: 22px; left: 22px; z-index: 200; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
@@ -1754,6 +1837,12 @@
   </dialog>
 
   <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+  <dialog class="image-lightbox" id="imageLightbox" aria-label="عرض صورة مثال النتيجة">
+    <button class="image-lightbox-close" type="button" data-close-lightbox aria-label="إغلاق الصورة">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+    </button>
+    <img id="imageLightboxImg" alt="">
+  </dialog>
   <button class="back-to-top" id="backToTop" type="button" aria-label="العودة إلى الأعلى">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
   </button>
